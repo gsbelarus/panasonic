@@ -73,6 +73,57 @@ const frequencyOptions = ['50Hz', '60Hz'];
 const airVolumeUnits = ['CMH', 'CFM', 'L/s'];
 const staticPressureUnits = ['Pa', 'mmWG', 'inWG', 'mmHg'];
 
+const airVolumeToCmh = (value: number, unit: string) => {
+  if (unit === 'CFM') {
+    return value * 1.69901082;
+  }
+  if (unit === 'L/s') {
+    return value * 3.6;
+  }
+  return value;
+};
+
+const cmhToAirVolumeUnit = (value: number, unit: string) => {
+  if (unit === 'CFM') {
+    return value / 1.69901082;
+  }
+  if (unit === 'L/s') {
+    return value / 3.6;
+  }
+  return value;
+};
+
+const staticPressureToPa = (value: number, unit: string) => {
+  if (unit === 'mmWG') {
+    return value * 9.80665;
+  }
+  if (unit === 'inWG') {
+    return value * 249.0889;
+  }
+  if (unit === 'mmHg') {
+    return value * 133.322;
+  }
+  return value;
+};
+
+const paToStaticPressureUnit = (value: number, unit: string) => {
+  if (unit === 'mmWG') {
+    return value / 9.80665;
+  }
+  if (unit === 'inWG') {
+    return value / 249.0889;
+  }
+  if (unit === 'mmHg') {
+    return value / 133.322;
+  }
+  return value;
+};
+
+const formatRangeValue = (value: number) => {
+  const rounded = Math.round(value * 100) / 100;
+  return Number.isInteger(rounded) ? rounded.toLocaleString() : rounded.toLocaleString();
+};
+
 // Category icons (simple SVG paths)
 const categoryIcons: Record<string, string> = {
   'Cabinet Fan': 'M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z',
@@ -308,9 +359,10 @@ export default function ProductSelectionStepper({
         if (isNaN(num)) {
           return 'Invalid input';
         }
-        // NOTE: Range validation applied to entered value regardless of unit (no conversion)
-        if (num < 0 || num > 12500) {
-          return 'Value must be between 0 and 12,500 CMH';
+        const airVolumeCmh = airVolumeToCmh(num, state.form.airVolumeUnit);
+        if (airVolumeCmh < 0 || airVolumeCmh > 12500) {
+          const maxValue = cmhToAirVolumeUnit(12500, state.form.airVolumeUnit);
+          return `Value must be between 0 and ${formatRangeValue(maxValue)} ${state.form.airVolumeUnit}`;
         }
       }
 
@@ -320,9 +372,10 @@ export default function ProductSelectionStepper({
         if (isNaN(num)) {
           return 'Invalid input';
         }
-        // NOTE: Range validation applied to entered value regardless of unit (no conversion)
-        if (num < 0 || num > 1000) {
-          return 'Value must be between 0 and 1,000 Pa';
+        const pressurePa = staticPressureToPa(num, state.form.staticPressureUnit);
+        if (pressurePa < 0 || pressurePa > 1000) {
+          const maxValue = paToStaticPressureUnit(1000, state.form.staticPressureUnit);
+          return `Value must be between 0 and ${formatRangeValue(maxValue)} ${state.form.staticPressureUnit}`;
         }
       }
 
