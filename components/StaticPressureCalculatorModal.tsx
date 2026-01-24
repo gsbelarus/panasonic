@@ -8,6 +8,7 @@ interface StaticPressureCalculatorModalProps {
   onClose: () => void;
   onApply: (value: number, unit: string) => void;
   initialAirVolume?: string;
+  initialAirVolumeUnit?: string;
 }
 
 const ductMaterials = ['Aluminium Flex', 'Steel', 'Vinyl'];
@@ -25,6 +26,22 @@ const wallCapTypes = [
   'Backdraft Damper',
   'Flush Mount Cap',
 ];
+
+const convertAirVolumeToCmh = (value: string, unit: string): string => {
+  const numericValue = Number(value);
+  if (!value || Number.isNaN(numericValue)) {
+    return '';
+  }
+
+  let converted = numericValue;
+  if (unit === 'CFM') {
+    converted = numericValue * 1.69901082;
+  } else if (unit === 'L/s') {
+    converted = numericValue * 3.6;
+  }
+
+  return (Math.round(converted * 100) / 100).toString();
+};
 
 // Friction factors by material (simplified)
 const materialFrictionFactors: Record<string, number> = {
@@ -82,21 +99,28 @@ export default function StaticPressureCalculatorModal({
   onClose,
   onApply,
   initialAirVolume = '',
+  initialAirVolumeUnit = 'CMH',
 }: StaticPressureCalculatorModalProps) {
+  const initialAirVolumeCmh = convertAirVolumeToCmh(
+    initialAirVolume,
+    initialAirVolumeUnit
+  );
   // Use the initialAirVolume in the initial state
-  const [form, setForm] = useState<FormState>(() => getInitialFormState(initialAirVolume));
+  const [form, setForm] = useState<FormState>(() =>
+    getInitialFormState(initialAirVolumeCmh)
+  );
   const [errors, setErrors] = useState<FormErrors>({});
   const [calculatedValue, setCalculatedValue] = useState<number | null>(null);
   const [lastOpenState, setLastOpenState] = useState(false);
 
   // When modal opens and there's an initial air volume, update the form
   // This is a controlled update based on state comparison
-  if (isOpen && !lastOpenState && initialAirVolume) {
+  if (isOpen && !lastOpenState && initialAirVolumeCmh) {
     // Schedule the state update after render
     setLastOpenState(true);
     // Also set the air volume - React 19 allows this pattern when done carefully
-    if (form.airVolume !== initialAirVolume) {
-      setForm((prev) => ({ ...prev, airVolume: initialAirVolume }));
+    if (form.airVolume !== initialAirVolumeCmh) {
+      setForm((prev) => ({ ...prev, airVolume: initialAirVolumeCmh }));
     }
   } else if (!isOpen && lastOpenState) {
     setLastOpenState(false);
@@ -177,8 +201,19 @@ export default function StaticPressureCalculatorModal({
 
     // Add elbow losses if applicable
     if (form.hasElbow) {
-      // Elbow loss coefficient (simplified)
-      const elbowK = 0.5;
+      // Elbow loss coefficient (simplified) based on radius-to-diameter ratio
+      const elbowRadiusMm = Number(form.elbowRadius);
+      const elbowRadiusM = elbowRadiusMm / 1000;
+      const radiusToDiameter = elbowRadiusM / diameterM;
+      let elbowK = 0.5;
+
+      if (radiusToDiameter < 1) {
+        elbowK = 1.5;
+      } else if (radiusToDiameter < 1.5) {
+        elbowK = 1.0;
+      } else if (radiusToDiameter < 2) {
+        elbowK = 0.75;
+      }
       const elbowLoss =
         elbowK *
         form.elbowCount *
@@ -189,8 +224,15 @@ export default function StaticPressureCalculatorModal({
 
     // Add cap/louver losses if applicable
     if (form.hasCapLouver) {
-      // Cap loss coefficient (simplified)
-      const capK = 0.8;
+      // Cap loss coefficient (simplified) based on wall cap type
+      const capLossCoefficients: Record<string, number> = {
+        'Standard Louver': 0.7,
+        'Weather Hood': 0.9,
+        'Dryer Vent Cap': 1.1,
+        'Backdraft Damper': 1.3,
+        'Flush Mount Cap': 0.6,
+      };
+      const capK = capLossCoefficients[form.wallCapType] ?? 0.8;
       const capLoss = capK * (airDensity * Math.pow(velocity, 2)) / 2;
       pressureDrop += capLoss;
     }
@@ -269,8 +311,8 @@ export default function StaticPressureCalculatorModal({
             onChange={(e) => handleFieldChange('airVolume', e.target.value)}
             placeholder="Enter air volume"
             className={`w-full h-11 px-3 border rounded-[10px] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] ${errors.airVolume
-                ? 'border-[var(--error)]'
-                : 'border-[var(--border)] focus:border-[var(--border-focus)]'
+              ? 'border-[var(--error)]'
+              : 'border-[var(--border)] focus:border-[var(--border-focus)]'
               }`}
           />
           {errors.airVolume && (
@@ -297,8 +339,8 @@ export default function StaticPressureCalculatorModal({
               value={form.material}
               onChange={(e) => handleFieldChange('material', e.target.value)}
               className={`w-full h-11 px-3 border rounded-[10px] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] ${errors.material
-                  ? 'border-[var(--error)]'
-                  : 'border-[var(--border)] focus:border-[var(--border-focus)]'
+                ? 'border-[var(--error)]'
+                : 'border-[var(--border)] focus:border-[var(--border-focus)]'
                 }`}
             >
               <option value="">Select material</option>
@@ -330,8 +372,8 @@ export default function StaticPressureCalculatorModal({
                 onChange={(e) => handleFieldChange('ductLength', e.target.value)}
                 placeholder="Length"
                 className={`w-full h-11 px-3 border rounded-[10px] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] ${errors.ductLength
-                    ? 'border-[var(--error)]'
-                    : 'border-[var(--border)] focus:border-[var(--border-focus)]'
+                  ? 'border-[var(--error)]'
+                  : 'border-[var(--border)] focus:border-[var(--border-focus)]'
                   }`}
               />
               {errors.ductLength && (
@@ -375,8 +417,8 @@ export default function StaticPressureCalculatorModal({
               value={form.diameter}
               onChange={(e) => handleFieldChange('diameter', e.target.value)}
               className={`w-full h-11 px-3 border rounded-[10px] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] ${errors.diameter
-                  ? 'border-[var(--error)]'
-                  : 'border-[var(--border)] focus:border-[var(--border-focus)]'
+                ? 'border-[var(--error)]'
+                : 'border-[var(--border)] focus:border-[var(--border-focus)]'
                 }`}
             >
               <option value="">Select diameter</option>
@@ -462,8 +504,8 @@ export default function StaticPressureCalculatorModal({
                   }
                   placeholder="Radius"
                   className={`w-full h-11 px-3 border rounded-[10px] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] ${errors.elbowRadius
-                      ? 'border-[var(--error)]'
-                      : 'border-[var(--border)] focus:border-[var(--border-focus)]'
+                    ? 'border-[var(--error)]'
+                    : 'border-[var(--border)] focus:border-[var(--border-focus)]'
                     }`}
                 />
                 {errors.elbowRadius && (
@@ -518,8 +560,8 @@ export default function StaticPressureCalculatorModal({
                 value={form.wallCapType}
                 onChange={(e) => handleFieldChange('wallCapType', e.target.value)}
                 className={`w-full h-11 px-3 border rounded-[10px] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] ${errors.wallCapType
-                    ? 'border-[var(--error)]'
-                    : 'border-[var(--border)] focus:border-[var(--border-focus)]'
+                  ? 'border-[var(--error)]'
+                  : 'border-[var(--border)] focus:border-[var(--border-focus)]'
                   }`}
               >
                 <option value="">Select wall cap type</option>

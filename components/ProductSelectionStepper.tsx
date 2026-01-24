@@ -115,7 +115,6 @@ interface ModalState {
   leaveConfirm: boolean;
   airVolumeCalc: boolean;
   staticPressureCalc: boolean;
-  contactUs: boolean;
 }
 
 interface State {
@@ -158,7 +157,6 @@ const initialState: State = {
     leaveConfirm: false,
     airVolumeCalc: false,
     staticPressureCalc: false,
-    contactUs: false,
   },
   isDirty: false,
   searchResult: null,
@@ -437,8 +435,8 @@ export default function ProductSelectionStepper({
                     onChange={(e) => handleChange('region', e.target.value)}
                     onBlur={() => handleBlur('region')}
                     className={`w-full h-11 px-3 border rounded-[10px] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] ${state.errors.region
-                        ? 'border-[var(--error)]'
-                        : 'border-[var(--border)] focus:border-[var(--border-focus)]'
+                      ? 'border-[var(--error)]'
+                      : 'border-[var(--border)] focus:border-[var(--border-focus)]'
                       }`}
                   >
                     <option value="">Select region</option>
@@ -468,8 +466,8 @@ export default function ProductSelectionStepper({
                     onBlur={() => handleBlur('country')}
                     disabled={!state.form.region}
                     className={`w-full h-11 px-3 border rounded-[10px] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] disabled:bg-gray-100 disabled:cursor-not-allowed ${state.errors.country
-                        ? 'border-[var(--error)]'
-                        : 'border-[var(--border)] focus:border-[var(--border-focus)]'
+                      ? 'border-[var(--error)]'
+                      : 'border-[var(--border)] focus:border-[var(--border-focus)]'
                       }`}
                   >
                     <option value="">Select country</option>
@@ -512,8 +510,8 @@ export default function ProductSelectionStepper({
                     type="button"
                     onClick={() => handleChange('category', cat)}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors ${state.form.category === cat
-                        ? 'bg-[var(--primary)] text-white border-[var(--primary)]'
-                        : 'bg-white text-[var(--muted)] border-[var(--border)] hover:border-[var(--primary)] hover:text-[var(--foreground)]'
+                      ? 'bg-[var(--primary)] text-white border-[var(--primary)]'
+                      : 'bg-white text-[var(--muted)] border-[var(--border)] hover:border-[var(--primary)] hover:text-[var(--foreground)]'
                       }`}
                   >
                     <svg
@@ -548,8 +546,8 @@ export default function ProductSelectionStepper({
                     onChange={(e) => handleChange('category', e.target.value)}
                     onBlur={() => handleBlur('category')}
                     className={`w-full h-11 px-3 border rounded-[10px] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] ${state.errors.category
-                        ? 'border-[var(--error)]'
-                        : 'border-[var(--border)] focus:border-[var(--border-focus)]'
+                      ? 'border-[var(--error)]'
+                      : 'border-[var(--border)] focus:border-[var(--border-focus)]'
                       }`}
                   >
                     <option value="">Select category</option>
@@ -579,8 +577,8 @@ export default function ProductSelectionStepper({
                     onBlur={() => handleBlur('subcategory')}
                     disabled={!state.form.category}
                     className={`w-full h-11 px-3 border rounded-[10px] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] disabled:bg-gray-100 disabled:cursor-not-allowed ${state.errors.subcategory
-                        ? 'border-[var(--error)]'
-                        : 'border-[var(--border)] focus:border-[var(--border-focus)]'
+                      ? 'border-[var(--error)]'
+                      : 'border-[var(--border)] focus:border-[var(--border-focus)]'
                       }`}
                   >
                     <option value="">Select subcategory</option>
@@ -628,8 +626,8 @@ export default function ProductSelectionStepper({
                     onChange={(e) => handleChange('voltage', e.target.value)}
                     onBlur={() => handleBlur('voltage')}
                     className={`w-full h-11 px-3 border rounded-[10px] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] ${state.errors.voltage
-                        ? 'border-[var(--error)]'
-                        : 'border-[var(--border)] focus:border-[var(--border-focus)]'
+                      ? 'border-[var(--error)]'
+                      : 'border-[var(--border)] focus:border-[var(--border-focus)]'
                       }`}
                   >
                     <option value="">Select voltage</option>
@@ -658,8 +656,8 @@ export default function ProductSelectionStepper({
                     onChange={(e) => handleChange('frequency', e.target.value)}
                     onBlur={() => handleBlur('frequency')}
                     className={`w-full h-11 px-3 border rounded-[10px] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] ${state.errors.frequency
-                        ? 'border-[var(--error)]'
-                        : 'border-[var(--border)] focus:border-[var(--border-focus)]'
+                      ? 'border-[var(--error)]'
+                      : 'border-[var(--border)] focus:border-[var(--border-focus)]'
                       }`}
                   >
                     <option value="">Select frequency</option>
@@ -724,8 +722,8 @@ export default function ProductSelectionStepper({
                       onBlur={() => handleBlur('airVolume')}
                       placeholder="Enter air volume"
                       className={`flex-1 h-11 px-3 border rounded-[10px] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] ${state.errors.airVolume
-                          ? 'border-[var(--error)]'
-                          : 'border-[var(--border)] focus:border-[var(--border-focus)]'
+                        ? 'border-[var(--error)]'
+                        : 'border-[var(--border)] focus:border-[var(--border-focus)]'
                         }`}
                     />
                     <select
@@ -785,8 +783,8 @@ export default function ProductSelectionStepper({
                       onBlur={() => handleBlur('staticPressure')}
                       placeholder="Enter static pressure"
                       className={`flex-1 h-11 px-3 border rounded-[10px] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] ${state.errors.staticPressure
-                          ? 'border-[var(--error)]'
-                          : 'border-[var(--border)] focus:border-[var(--border-focus)]'
+                        ? 'border-[var(--error)]'
+                        : 'border-[var(--border)] focus:border-[var(--border-focus)]'
                         }`}
                     />
                     <select
@@ -895,6 +893,7 @@ export default function ProductSelectionStepper({
         }
         onApply={handleApplyStaticPressure}
         initialAirVolume={state.form.airVolume}
+        initialAirVolumeUnit={state.form.airVolumeUnit}
       />
     </section>
   );
