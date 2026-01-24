@@ -23,13 +23,13 @@ export default function CategoryTiles({ onCategorySelect }: CategoryTilesProps) 
     if (stepElement) {
       stepElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
       // Use scrollend event when available, with a conservative timeout fallback
-      let fallbackTimeout: number;
+      let fallbackTimeout: number | undefined = undefined;
       const handleScrollEnd = () => {
         window.clearTimeout(fallbackTimeout);
-        (stepElement as any).removeEventListener?.('scrollend', handleScrollEnd);
+        window.removeEventListener('scrollend', handleScrollEnd);
         onCategorySelect(category);
       };
-      (stepElement as any).addEventListener?.('scrollend', handleScrollEnd);
+      window.addEventListener('scrollend', handleScrollEnd, { once: true });
       fallbackTimeout = window.setTimeout(handleScrollEnd, 600);
     } else {
       onCategorySelect(category);
