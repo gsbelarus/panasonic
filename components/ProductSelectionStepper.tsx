@@ -121,7 +121,10 @@ const paToStaticPressureUnit = (value: number, unit: string) => {
 
 const formatRangeValue = (value: number) => {
   const rounded = Math.round(value * 100) / 100;
-  return Number.isInteger(rounded) ? rounded.toLocaleString() : rounded.toLocaleString();
+  if (Number.isInteger(rounded)) {
+    return rounded.toLocaleString();
+  }
+  return rounded.toLocaleString(undefined, { maximumFractionDigits: 2 });
 };
 
 // Category icons (simple SVG paths)
@@ -235,11 +238,19 @@ function reducer(state: State, action: Action): State {
         newForm.subcategory = '';
       }
 
+      const nextErrors = { ...state.errors, [action.field]: undefined };
+      if (action.field === 'airVolumeUnit') {
+        nextErrors.airVolume = undefined;
+      }
+      if (action.field === 'staticPressureUnit') {
+        nextErrors.staticPressure = undefined;
+      }
+
       return {
         ...state,
         form: newForm,
         isDirty: true,
-        errors: { ...state.errors, [action.field]: undefined },
+        errors: nextErrors,
         searchResult: null,
       };
     }
