@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import Modal from './Modal';
 
 interface StaticPressureCalculatorModalProps {
@@ -208,7 +208,7 @@ export default function StaticPressureCalculatorModal({
     }
   };
 
-  const handleClear = () => {
+  const handleClear = useCallback(() => {
     setForm({
       airVolume: '',
       material: '',
@@ -223,12 +223,12 @@ export default function StaticPressureCalculatorModal({
     });
     setErrors({});
     setCalculatedValue(null);
-  };
+  }, []);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     handleClear();
     onClose();
-  };
+  }, [handleClear, onClose]);
 
   const handleFieldChange = (
     field: keyof FormState,

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import Modal from './Modal';
 
 interface AirVolumeCalculatorModalProps {
@@ -162,7 +162,7 @@ export default function AirVolumeCalculatorModal({
     }
   };
 
-  const handleClear = () => {
+  const handleClear = useCallback(() => {
     setForm({
       siteType: '',
       roomType: '',
@@ -172,12 +172,12 @@ export default function AirVolumeCalculatorModal({
     });
     setErrors({});
     setCalculatedValue(null);
-  };
+  }, []);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     handleClear();
     onClose();
-  };
+  }, [handleClear, onClose]);
 
   const handleFieldChange = (field: keyof FormState, value: string) => {
     setForm((prev) => {
