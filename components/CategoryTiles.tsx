@@ -22,10 +22,15 @@ export default function CategoryTiles({ onCategorySelect }: CategoryTilesProps) 
     const stepElement = document.getElementById('step-category');
     if (stepElement) {
       stepElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      // Slight delay to ensure scroll completes before category selection
-      setTimeout(() => {
+      // Use scrollend event when available, with a conservative timeout fallback
+      let fallbackTimeout: number;
+      const handleScrollEnd = () => {
+        window.clearTimeout(fallbackTimeout);
+        (stepElement as any).removeEventListener?.('scrollend', handleScrollEnd);
         onCategorySelect(category);
-      }, 300);
+      };
+      (stepElement as any).addEventListener?.('scrollend', handleScrollEnd);
+      fallbackTimeout = window.setTimeout(handleScrollEnd, 600);
     } else {
       onCategorySelect(category);
     }
