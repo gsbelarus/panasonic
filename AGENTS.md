@@ -1,0 +1,3 @@
+## Building 
+
+`pnpm run build`
