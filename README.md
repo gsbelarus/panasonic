@@ -60,13 +60,29 @@ DB_NAME=panasonic          # Database name
 
 ### Database Setup
 
-The application uses MongoDB for storing regions and countries data. On first startup:
+The application uses MongoDB for storing reference data. On first startup:
 
 1. The database connection is established using the environment variables
-2. Unique indexes are created on `regions.code` and `countries.iso2`
-3. If the `regions` or `countries` collections are empty, they are seeded with initial data
+2. Unique indexes are created for idempotent seeding:
+   - `regions.code` (unique)
+   - `countries.iso2` (unique)
+   - `categories.code` (unique)
+   - `subcategories.categoryCode + code` (compound unique)
+3. Sort indexes are created for stable UI ordering:
+   - `categories.sortOrder`
+   - `subcategories.sortOrder`
+4. If collections are empty, they are seeded with initial data
 
 The seeding process is **idempotent** - it's safe to run multiple times without creating duplicates.
+
+#### Collections
+
+| Collection | Description | Fields |
+|------------|-------------|--------|
+| `regions` | Geographic regions | `code`, `name` |
+| `countries` | Countries with regional association | `regionCode`, `iso2`, `name`, `voltage`, `frequency` |
+| `categories` | Product categories | `code`, `name`, `icon`, `sortOrder` |
+| `subcategories` | Product subcategories | `categoryCode`, `code`, `name`, `sortOrder` |
 
 ### Development
 
@@ -101,7 +117,9 @@ npm start
 ├── app/
 │   ├── api/
 │   │   ├── regions/route.ts             # GET /api/regions - fetch all regions
-│   │   └── countries/route.ts           # GET /api/countries - fetch countries (optional ?regionCode filter)
+│   │   ├── countries/route.ts           # GET /api/countries - fetch countries (optional ?regionCode filter)
+│   │   ├── categories/route.ts          # GET /api/categories - fetch all categories
+│   │   └── subcategories/route.ts       # GET /api/subcategories - fetch subcategories (optional ?categoryCode filter)
 │   ├── globals.css                      # Global styles and CSS variables
 │   ├── layout.tsx                       # Root layout
 │   └── page.tsx                         # Home page (main entry point)
@@ -118,7 +136,8 @@ npm start
 │   ├── StaticPressureCalculatorModal.tsx # Static pressure calculator
 │   └── ResultsBanner.tsx                # Search results banner
 ├── hooks/
-│   └── useRegionsAndCountries.ts        # React hooks for fetching regions/countries
+│   ├── useRegionsAndCountries.ts        # React hooks for fetching regions/countries
+│   └── useCategoriesAndSubcategories.ts # React hooks for fetching categories/subcategories
 ├── lib/
 │   └── db/
 │       ├── index.ts                     # Re-exports all db utilities

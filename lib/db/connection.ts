@@ -1,6 +1,6 @@
 import dotenvFlow from 'dotenv-flow';
 import { MongoClient, Db, Collection } from 'mongodb';
-import type { Region, Country } from './schemas';
+import type { Region, Country, Category, Subcategory } from './schemas';
 
 // Load environment variables using dotenv-flow
 // This supports .env, .env.local, .env.development, etc.
@@ -110,6 +110,8 @@ export async function closeDatabaseConnection(): Promise<void> {
 export const COLLECTIONS = {
   REGIONS: 'regions',
   COUNTRIES: 'countries',
+  CATEGORIES: 'categories',
+  SUBCATEGORIES: 'subcategories',
 } as const;
 
 /**
@@ -126,6 +128,22 @@ export async function getRegionsCollection(): Promise<Collection<Region>> {
 export async function getCountriesCollection(): Promise<Collection<Country>> {
   const { db } = await connectToDatabase();
   return db.collection<Country>(COLLECTIONS.COUNTRIES);
+}
+
+/**
+ * Get the categories collection with proper typing
+ */
+export async function getCategoriesCollection(): Promise<Collection<Category>> {
+  const { db } = await connectToDatabase();
+  return db.collection<Category>(COLLECTIONS.CATEGORIES);
+}
+
+/**
+ * Get the subcategories collection with proper typing
+ */
+export async function getSubcategoriesCollection(): Promise<Collection<Subcategory>> {
+  const { db } = await connectToDatabase();
+  return db.collection<Subcategory>(COLLECTIONS.SUBCATEGORIES);
 }
 
 // ============================================================================

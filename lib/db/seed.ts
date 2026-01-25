@@ -1,6 +1,6 @@
 import { connectToDatabase, COLLECTIONS } from './connection';
-import type { CreateRegion, CreateCountry } from './schemas';
-import { validateCreateRegion, validateCreateCountry } from './schemas';
+import type { CreateRegion, CreateCountry, CreateCategory, CreateSubcategory } from './schemas';
+import { validateCreateRegion, validateCreateCountry, validateCreateCategory, validateCreateSubcategory } from './schemas';
 
 // ============================================================================
 // Seed Data - Extracted from existing hardcoded values
@@ -37,6 +37,65 @@ const SEED_COUNTRIES: CreateCountry[] = [
   { iso2: 'JO', name: 'Jordan', regionCode: 'middle-east', voltage: '230V', frequency: '50Hz' },
 ];
 
+/**
+ * Initial categories data matching the existing categories array
+ */
+const SEED_CATEGORIES: CreateCategory[] = [
+  { code: 'cabinet-fan', name: 'Cabinet Fan', icon: 'M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z', sortOrder: 0 },
+  { code: 'ceiling-mount', name: 'Ceiling Mount', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6', sortOrder: 1 },
+  { code: 'in-line-centrifugal-fan', name: 'In-line Centrifugal Fan', icon: 'M13 10V3L4 14h7v7l9-11h-7z', sortOrder: 2 },
+  { code: 'industrial-fan', name: 'Industrial Fan', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z', sortOrder: 3 },
+  { code: 'mini-sirocco', name: 'Mini Sirocco', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z', sortOrder: 4 },
+  { code: 'thermo-vent', name: 'Thermo Vent', icon: 'M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z', sortOrder: 5 },
+  { code: 'wall-mount', name: 'Wall Mount', icon: 'M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2', sortOrder: 6 },
+  { code: 'window-mount', name: 'Window Mount', icon: 'M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z', sortOrder: 7 },
+];
+
+/**
+ * Initial subcategories data matching the existing categorySubcategories
+ */
+const SEED_SUBCATEGORIES: CreateSubcategory[] = [
+  // Cabinet Fan
+  { code: 'standard', name: 'Standard', categoryCode: 'cabinet-fan', sortOrder: 0 },
+  { code: 'heavy-duty', name: 'Heavy Duty', categoryCode: 'cabinet-fan', sortOrder: 1 },
+  { code: 'compact', name: 'Compact', categoryCode: 'cabinet-fan', sortOrder: 2 },
+
+  // Ceiling Mount
+  { code: 'flush-mount', name: 'Flush Mount', categoryCode: 'ceiling-mount', sortOrder: 0 },
+  { code: 'duct-connect', name: 'Duct Connect', categoryCode: 'ceiling-mount', sortOrder: 1 },
+  { code: 'decorative', name: 'Decorative', categoryCode: 'ceiling-mount', sortOrder: 2 },
+
+  // In-line Centrifugal Fan
+  { code: 'low-profile', name: 'Low Profile', categoryCode: 'in-line-centrifugal-fan', sortOrder: 0 },
+  { code: 'high-pressure', name: 'High Pressure', categoryCode: 'in-line-centrifugal-fan', sortOrder: 1 },
+  { code: 'mixed-flow', name: 'Mixed Flow', categoryCode: 'in-line-centrifugal-fan', sortOrder: 2 },
+
+  // Industrial Fan
+  { code: 'axial', name: 'Axial', categoryCode: 'industrial-fan', sortOrder: 0 },
+  { code: 'centrifugal', name: 'Centrifugal', categoryCode: 'industrial-fan', sortOrder: 1 },
+  { code: 'propeller', name: 'Propeller', categoryCode: 'industrial-fan', sortOrder: 2 },
+
+  // Mini Sirocco
+  { code: 'mini-standard', name: 'Standard', categoryCode: 'mini-sirocco', sortOrder: 0 },
+  { code: 'low-noise', name: 'Low Noise', categoryCode: 'mini-sirocco', sortOrder: 1 },
+  { code: 'high-flow', name: 'High Flow', categoryCode: 'mini-sirocco', sortOrder: 2 },
+
+  // Thermo Vent
+  { code: 'basic', name: 'Basic', categoryCode: 'thermo-vent', sortOrder: 0 },
+  { code: 'with-timer', name: 'With Timer', categoryCode: 'thermo-vent', sortOrder: 1 },
+  { code: 'with-humidity-sensor', name: 'With Humidity Sensor', categoryCode: 'thermo-vent', sortOrder: 2 },
+
+  // Wall Mount
+  { code: 'wall-standard', name: 'Standard', categoryCode: 'wall-mount', sortOrder: 0 },
+  { code: 'with-shutter', name: 'With Shutter', categoryCode: 'wall-mount', sortOrder: 1 },
+  { code: 'with-light', name: 'With Light', categoryCode: 'wall-mount', sortOrder: 2 },
+
+  // Window Mount
+  { code: 'reversible', name: 'Reversible', categoryCode: 'window-mount', sortOrder: 0 },
+  { code: 'exhaust-only', name: 'Exhaust Only', categoryCode: 'window-mount', sortOrder: 1 },
+  { code: 'with-remote', name: 'With Remote', categoryCode: 'window-mount', sortOrder: 2 },
+];
+
 // ============================================================================
 // Index Creation
 // ============================================================================
@@ -63,6 +122,36 @@ async function createIndexes(): Promise<void> {
   await db.collection(COLLECTIONS.COUNTRIES).createIndex(
     { regionCode: 1 },
     { name: 'idx_countries_region_code' }
+  );
+
+  // Create unique index on categories.code
+  await db.collection(COLLECTIONS.CATEGORIES).createIndex(
+    { code: 1 },
+    { unique: true, name: 'idx_categories_code_unique' }
+  );
+
+  // Create index on categories.sortOrder for stable ordering
+  await db.collection(COLLECTIONS.CATEGORIES).createIndex(
+    { sortOrder: 1 },
+    { name: 'idx_categories_sort_order' }
+  );
+
+  // Create compound unique index on subcategories (categoryCode + code)
+  await db.collection(COLLECTIONS.SUBCATEGORIES).createIndex(
+    { categoryCode: 1, code: 1 },
+    { unique: true, name: 'idx_subcategories_category_code_unique' }
+  );
+
+  // Create index on subcategories.categoryCode for efficient lookups
+  await db.collection(COLLECTIONS.SUBCATEGORIES).createIndex(
+    { categoryCode: 1 },
+    { name: 'idx_subcategories_category_code' }
+  );
+
+  // Create index on subcategories.sortOrder for stable ordering
+  await db.collection(COLLECTIONS.SUBCATEGORIES).createIndex(
+    { categoryCode: 1, sortOrder: 1 },
+    { name: 'idx_subcategories_sort_order' }
   );
 
   console.log('[Seed] Indexes created successfully');
@@ -165,6 +254,82 @@ async function seedCountries(): Promise<number> {
   return insertedCount;
 }
 
+/**
+ * Seed categories collection with initial data
+ * Uses upsert to ensure idempotency
+ */
+async function seedCategories(): Promise<number> {
+  const { db } = await connectToDatabase();
+  const collection = db.collection(COLLECTIONS.CATEGORIES);
+
+  let insertedCount = 0;
+  const now = new Date();
+
+  for (const categoryData of SEED_CATEGORIES) {
+    // Validate the data using Zod
+    const validatedData = validateCreateCategory(categoryData);
+
+    // Upsert to ensure idempotency
+    const result = await collection.updateOne(
+      { code: validatedData.code },
+      {
+        $setOnInsert: {
+          ...validatedData,
+          createdAt: now,
+        },
+        $set: {
+          updatedAt: now,
+        },
+      },
+      { upsert: true }
+    );
+
+    if (result.upsertedCount > 0) {
+      insertedCount++;
+    }
+  }
+
+  return insertedCount;
+}
+
+/**
+ * Seed subcategories collection with initial data
+ * Uses upsert to ensure idempotency
+ */
+async function seedSubcategories(): Promise<number> {
+  const { db } = await connectToDatabase();
+  const collection = db.collection(COLLECTIONS.SUBCATEGORIES);
+
+  let insertedCount = 0;
+  const now = new Date();
+
+  for (const subcategoryData of SEED_SUBCATEGORIES) {
+    // Validate the data using Zod
+    const validatedData = validateCreateSubcategory(subcategoryData);
+
+    // Upsert to ensure idempotency (using compound key: categoryCode + code)
+    const result = await collection.updateOne(
+      { categoryCode: validatedData.categoryCode, code: validatedData.code },
+      {
+        $setOnInsert: {
+          ...validatedData,
+          createdAt: now,
+        },
+        $set: {
+          updatedAt: now,
+        },
+      },
+      { upsert: true }
+    );
+
+    if (result.upsertedCount > 0) {
+      insertedCount++;
+    }
+  }
+
+  return insertedCount;
+}
+
 // ============================================================================
 // Main Seeding Function
 // ============================================================================
@@ -172,6 +337,8 @@ async function seedCountries(): Promise<number> {
 export interface SeedResult {
   regionsSeeded: number;
   countriesSeeded: number;
+  categoriesSeeded: number;
+  subcategoriesSeeded: number;
   indexesCreated: boolean;
   skipped: boolean;
 }
@@ -186,6 +353,8 @@ export async function seedDatabase(force = false): Promise<SeedResult> {
   const result: SeedResult = {
     regionsSeeded: 0,
     countriesSeeded: 0,
+    categoriesSeeded: 0,
+    subcategoriesSeeded: 0,
     indexesCreated: false,
     skipped: false,
   };
@@ -198,8 +367,10 @@ export async function seedDatabase(force = false): Promise<SeedResult> {
     // Check if seeding is needed
     const regionsNeedSeeding = force || await needsSeeding(COLLECTIONS.REGIONS);
     const countriesNeedSeeding = force || await needsSeeding(COLLECTIONS.COUNTRIES);
+    const categoriesNeedSeeding = force || await needsSeeding(COLLECTIONS.CATEGORIES);
+    const subcategoriesNeedSeeding = force || await needsSeeding(COLLECTIONS.SUBCATEGORIES);
 
-    if (!regionsNeedSeeding && !countriesNeedSeeding) {
+    if (!regionsNeedSeeding && !countriesNeedSeeding && !categoriesNeedSeeding && !subcategoriesNeedSeeding) {
       console.log('[Seed] Database already seeded, skipping...');
       result.skipped = true;
       return result;
@@ -215,6 +386,18 @@ export async function seedDatabase(force = false): Promise<SeedResult> {
     if (countriesNeedSeeding) {
       result.countriesSeeded = await seedCountries();
       console.log(`[Seed] Seeded ${result.countriesSeeded} countries`);
+    }
+
+    // Seed categories if needed
+    if (categoriesNeedSeeding) {
+      result.categoriesSeeded = await seedCategories();
+      console.log(`[Seed] Seeded ${result.categoriesSeeded} categories`);
+    }
+
+    // Seed subcategories if needed
+    if (subcategoriesNeedSeeding) {
+      result.subcategoriesSeeded = await seedSubcategories();
+      console.log(`[Seed] Seeded ${result.subcategoriesSeeded} subcategories`);
     }
 
     console.log('[Seed] Database seeding completed successfully');

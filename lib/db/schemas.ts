@@ -80,6 +80,72 @@ export const ErrorResponseSchema = z.object({
 });
 
 // ============================================================================
+// Category Schema
+// ============================================================================
+
+export const CategorySchema = z.object({
+  _id: objectIdSchema.optional(),
+  code: z.string().min(1, 'Category code is required').max(50),
+  name: z.string().min(1, 'Category name is required').max(100),
+  icon: z.string().optional(), // SVG path for the category icon
+  sortOrder: z.number().int().min(0).default(0),
+  createdAt: z.date().optional(),
+  updatedAt: z.date().optional(),
+});
+
+export const CreateCategorySchema = CategorySchema.omit({
+  _id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const CategoryResponseSchema = CategorySchema.extend({
+  _id: z.string(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+
+// ============================================================================
+// Subcategory Schema
+// ============================================================================
+
+export const SubcategorySchema = z.object({
+  _id: objectIdSchema.optional(),
+  code: z.string().min(1, 'Subcategory code is required').max(50),
+  name: z.string().min(1, 'Subcategory name is required').max(100),
+  categoryCode: z.string().min(1, 'Category code is required'),
+  sortOrder: z.number().int().min(0).default(0),
+  createdAt: z.date().optional(),
+  updatedAt: z.date().optional(),
+});
+
+export const CreateSubcategorySchema = SubcategorySchema.omit({
+  _id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const SubcategoryResponseSchema = SubcategorySchema.extend({
+  _id: z.string(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+
+// ============================================================================
+// API Response Schemas (Categories & Subcategories)
+// ============================================================================
+
+export const CategoriesApiResponseSchema = z.object({
+  success: z.boolean(),
+  data: z.array(CategoryResponseSchema),
+});
+
+export const SubcategoriesApiResponseSchema = z.object({
+  success: z.boolean(),
+  data: z.array(SubcategoryResponseSchema),
+});
+
+// ============================================================================
 // Inferred TypeScript Types
 // ============================================================================
 
@@ -94,6 +160,17 @@ export type CountryResponse = z.infer<typeof CountryResponseSchema>;
 export type RegionsApiResponse = z.infer<typeof RegionsApiResponseSchema>;
 export type CountriesApiResponse = z.infer<typeof CountriesApiResponseSchema>;
 export type ErrorResponse = z.infer<typeof ErrorResponseSchema>;
+
+export type Category = z.infer<typeof CategorySchema>;
+export type CreateCategory = z.infer<typeof CreateCategorySchema>;
+export type CategoryResponse = z.infer<typeof CategoryResponseSchema>;
+
+export type Subcategory = z.infer<typeof SubcategorySchema>;
+export type CreateSubcategory = z.infer<typeof CreateSubcategorySchema>;
+export type SubcategoryResponse = z.infer<typeof SubcategoryResponseSchema>;
+
+export type CategoriesApiResponse = z.infer<typeof CategoriesApiResponseSchema>;
+export type SubcategoriesApiResponse = z.infer<typeof SubcategoriesApiResponseSchema>;
 
 // ============================================================================
 // Validation Helper Functions
@@ -142,6 +219,50 @@ export function validateCreateRegion(data: unknown): CreateRegion {
  */
 export function validateCreateCountry(data: unknown): CreateCountry {
   return CreateCountrySchema.parse(data);
+}
+
+/**
+ * Parse and validate a category document from MongoDB
+ */
+export function parseCategory(doc: unknown): CategoryResponse {
+  const normalized = normalizeMongoDocument(doc);
+  return CategoryResponseSchema.parse(normalized);
+}
+
+/**
+ * Parse and validate a subcategory document from MongoDB
+ */
+export function parseSubcategory(doc: unknown): SubcategoryResponse {
+  const normalized = normalizeMongoDocument(doc);
+  return SubcategoryResponseSchema.parse(normalized);
+}
+
+/**
+ * Parse and validate an array of category documents
+ */
+export function parseCategories(docs: unknown[]): CategoryResponse[] {
+  return docs.map(parseCategory);
+}
+
+/**
+ * Parse and validate an array of subcategory documents
+ */
+export function parseSubcategories(docs: unknown[]): SubcategoryResponse[] {
+  return docs.map(parseSubcategory);
+}
+
+/**
+ * Validate create category payload
+ */
+export function validateCreateCategory(data: unknown): CreateCategory {
+  return CreateCategorySchema.parse(data);
+}
+
+/**
+ * Validate create subcategory payload
+ */
+export function validateCreateSubcategory(data: unknown): CreateSubcategory {
+  return CreateSubcategorySchema.parse(data);
 }
 
 /**
