@@ -56,9 +56,22 @@ export function useProducts(): UseProductsResult {
     hasMore: false,
   });
   const currentFiltersRef = useRef<ProductFilters>({});
+  const requestIdRef = useRef(0);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const fetchProducts = useCallback(async (filters: ProductFilters, reset = true) => {
+    let requestId = 0;
+    let controller: AbortController | null = null;
     try {
+      requestIdRef.current += 1;
+      requestId = requestIdRef.current;
+
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      controller = new AbortController();
+      abortControllerRef.current = controller;
+
       setLoading(true);
       setError(null);
 
@@ -88,11 +101,17 @@ export function useProducts(): UseProductsResult {
       const nextSkip = reset ? 0 : paginationRef.current.skip + paginationRef.current.limit;
       params.set('skip', String(nextSkip));
 
-      const response = await fetch(`/api/products?${params.toString()}`);
+      const response = await fetch(`/api/products?${params.toString()}`, {
+        signal: controller.signal,
+      });
       const data = await response.json();
 
       if (!data.success) {
         throw new Error(data.error || 'Failed to fetch products');
+      }
+
+      if (requestId !== requestIdRef.current) {
+        return;
       }
 
       if (reset) {
@@ -106,11 +125,17 @@ export function useProducts(): UseProductsResult {
 
       currentFiltersRef.current = filters;
     } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        return;
+      }
       const message = err instanceof Error ? err.message : 'Failed to fetch products';
       setError(message);
       console.error('[useProducts] Error:', err);
     } finally {
-      setLoading(false);
+      if (controller?.signal.aborted) return;
+      if (requestId === requestIdRef.current) {
+        setLoading(false);
+      }
     }
   }, []);
 

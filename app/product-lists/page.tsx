@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { FiltersPanel, type FilterState } from '@/components/filters';
@@ -10,7 +10,7 @@ import { useRegions, useCountriesByRegion } from '@/hooks/useRegionsAndCountries
 import { useCategories, useSubcategories } from '@/hooks/useCategoriesAndSubcategories';
 import { useProducts, type ProductFilters } from '@/hooks/useProducts';
 import type { ProductResponse } from '@/lib/db/products/schema';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 // ============================================================================
 // View Mode Type
@@ -44,7 +44,8 @@ export default function ProductListsPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
 
   const searchParams = useSearchParams();
-  const initialCategoryCodes = useMemo(() => {
+  const router = useRouter();
+  const urlCategoryCodes = useMemo(() => {
     const categoryParam = searchParams.get('categoryCode');
     if (!categoryParam) return [] as string[];
 
@@ -53,11 +54,16 @@ export default function ProductListsPage() {
       .map((value) => value.trim())
       .filter(Boolean);
   }, [searchParams]);
+  const hasCategoryParam = searchParams.has('categoryCode');
+  const selectedCategories = useMemo(
+    () => (hasCategoryParam ? urlCategoryCodes : []),
+    [hasCategoryParam, urlCategoryCodes]
+  );
 
   // Filter state
   const [filters, setFilters] = useState<FilterState>(() => ({
     ...initialFilterState,
-    selectedCategories: initialCategoryCodes,
+    selectedCategories: urlCategoryCodes,
   }));
 
   // Mobile filters panel state
@@ -72,6 +78,7 @@ export default function ProductListsPage() {
 
   // Search input state (debounced)
   const [searchInput, setSearchInput] = useState('');
+  const pendingQueryRef = useRef<string | null>(null);
 
   // Data hooks
   const { regions, loading: regionsLoading } = useRegions();
@@ -87,6 +94,34 @@ export default function ProductListsPage() {
     loadMore,
   } = useProducts();
 
+  const handleFiltersChange = useCallback(
+    (nextFilters: FilterState | ((prev: FilterState) => FilterState)) => {
+      setFilters((prev) => {
+        const resolved =
+          typeof nextFilters === 'function' ? nextFilters(prev) : nextFilters;
+
+        const params = new URLSearchParams(searchParams.toString());
+        if (resolved.selectedCategories.length > 0) {
+          params.set('categoryCode', resolved.selectedCategories.join(','));
+        } else {
+          params.delete('categoryCode');
+        }
+
+        const queryString = params.toString();
+        pendingQueryRef.current = queryString ? `?${queryString}` : '/product-lists';
+
+        return resolved;
+      });
+    },
+    [searchParams]
+  );
+
+  useEffect(() => {
+    if (!pendingQueryRef.current) return;
+    router.replace(pendingQueryRef.current, { scroll: false });
+    pendingQueryRef.current = null;
+  }, [router, filters]);
+
   // Fetch products when filters change
   useEffect(() => {
     // Only fetch if region and country are selected
@@ -95,8 +130,8 @@ export default function ProductListsPage() {
         regionCode: filters.regionCode,
         countryKey: filters.countryKey,
         categoryCode:
-          filters.selectedCategories.length > 0
-            ? filters.selectedCategories.join(',')
+          selectedCategories.length > 0
+            ? selectedCategories.join(',')
             : undefined,
         subcategoryCode:
           filters.selectedSubcategories.length > 0
@@ -110,14 +145,12 @@ export default function ProductListsPage() {
   }, [
     filters.regionCode,
     filters.countryKey,
-    filters.selectedCategories,
+    selectedCategories,
     filters.selectedSubcategories,
     filters.selectedVoltages,
     filters.searchQuery,
     fetchProducts,
   ]);
-
-  // Apply category filter from URL (e.g., /product-lists?categoryCode=wall-mount)
 
   // Debounced search
   useEffect(() => {
@@ -286,8 +319,9 @@ export default function ProductListsPage() {
                 countries={countries}
                 categories={categories}
                 subcategories={subcategories}
-                filters={filters}
-                onFiltersChange={setFilters}
+                filters={{ ...filters, selectedCategories }}
+                onFiltersChange={handleFiltersChange}
+                onClearAll={() => setSearchInput('')}
                 regionsLoading={regionsLoading}
                 countriesLoading={countriesLoading}
                 categoriesLoading={categoriesLoading}
@@ -399,7 +433,7 @@ export default function ProductListsPage() {
               )}
 
               {/* Products Grid/List */}
-              {!showLocationEmptyState && !showNoResultsState && !productsLoading && (
+              {!showLocationEmptyState && !showNoResultsState && products.length > 0 && (
                 <>
                   <div
                     className={
@@ -488,6 +522,7 @@ export default function ProductListsPage() {
 
       {/* Generate Report Modal */}
       <GenerateReportModal
+        key={reportModalProduct?.modelCode || 'report-modal'}
         isOpen={!!reportModalProduct}
         onClose={() => setReportModalProduct(null)}
         productModelCode={reportModalProduct?.modelCode || ''}

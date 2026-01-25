@@ -35,6 +35,7 @@ interface FiltersProps {
   subcategories: SubcategoryResponse[];
   filters: FilterState;
   onFiltersChange: Dispatch<SetStateAction<FilterState>>;
+  onClearAll?: () => void;
   regionsLoading?: boolean;
   countriesLoading?: boolean;
   categoriesLoading?: boolean;
@@ -76,6 +77,7 @@ export function FiltersPanel({
   subcategories,
   filters,
   onFiltersChange,
+  onClearAll,
   regionsLoading = false,
   countriesLoading = false,
   categoriesLoading = false,
@@ -194,6 +196,7 @@ export function FiltersPanel({
       staticPressureValue: 0,
       searchQuery: '',
     });
+    onClearAll?.();
   };
 
   // Close mobile panel on escape key
