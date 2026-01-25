@@ -103,8 +103,16 @@ export default function StoreCard({ store, isSelected, onClick }: StoreCardProps
       }
     } else {
       // Fallback: copy to clipboard
-      await navigator.clipboard.writeText(buildRouteUrl);
-      alert('Link copied to clipboard!');
+      try {
+        if (navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(buildRouteUrl);
+          alert('Link copied to clipboard!');
+        } else {
+          throw new Error('Clipboard API unavailable');
+        }
+      } catch {
+        alert('Unable to copy link. Please copy it manually.');
+      }
     }
   };
 
@@ -112,8 +120,8 @@ export default function StoreCard({ store, isSelected, onClick }: StoreCardProps
     <div
       ref={cardRef}
       className={`p-4 border rounded-lg cursor-pointer transition-all ${isSelected
-          ? 'border-[var(--primary)] bg-gray-50 shadow-md'
-          : 'border-[var(--border)] bg-white hover:border-[var(--border-focus)] hover:shadow-sm'
+        ? 'border-[var(--primary)] bg-gray-50 shadow-md'
+        : 'border-[var(--border)] bg-white hover:border-[var(--border-focus)] hover:shadow-sm'
         }`}
       onClick={onClick}
     >

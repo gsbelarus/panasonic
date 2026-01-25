@@ -76,6 +76,7 @@ export default function WhereToBuyPage() {
   const [storesLoading, setStoresLoading] = useState(false);
   const [storesError, setStoresError] = useState<string | null>(null);
   const storesRequestIdRef = useRef(0);
+  const geoRequestIdRef = useRef(0);
 
   // Selected store for map/card sync
   const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null);
@@ -121,6 +122,7 @@ export default function WhereToBuyPage() {
     setSortByNearest(false);
     setUserLocation(null);
     setLocationError(null);
+    geoRequestIdRef.current += 1;
   }, []);
 
   // Handle country change
@@ -131,6 +133,7 @@ export default function WhereToBuyPage() {
     setSortByNearest(false);
     setUserLocation(null);
     setLocationError(null);
+    geoRequestIdRef.current += 1;
   }, []);
 
   // Fetch stores
@@ -191,6 +194,7 @@ export default function WhereToBuyPage() {
   const handleSortByNearestChange = useCallback(
     (checked: boolean) => {
       if (checked) {
+        const geoRequestId = ++geoRequestIdRef.current;
         // Request geolocation
         if (!navigator.geolocation) {
           setLocationError('Geolocation is not supported by your browser');
@@ -200,12 +204,18 @@ export default function WhereToBuyPage() {
 
         navigator.geolocation.getCurrentPosition(
           (position) => {
+            if (geoRequestId !== geoRequestIdRef.current) {
+              return;
+            }
             const { latitude, longitude } = position.coords;
             setUserLocation({ lat: latitude, lng: longitude });
             setLocationError(null);
             setSortByNearest(true);
           },
           (error) => {
+            if (geoRequestId !== geoRequestIdRef.current) {
+              return;
+            }
             let message = 'Unable to get your location';
             switch (error.code) {
               case error.PERMISSION_DENIED:
@@ -223,6 +233,7 @@ export default function WhereToBuyPage() {
           }
         );
       } else {
+        geoRequestIdRef.current += 1;
         setSortByNearest(false);
         setUserLocation(null);
         setLocationError(null);
