@@ -24,7 +24,7 @@ export function useProducts(options: UseProductsOptions = {}): UseProductsResult
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchProducts = useCallback(async () => {
+  const fetchProducts = useCallback(async (signal?: AbortSignal) => {
     try {
       setIsLoading(true);
       setError(null);
@@ -51,7 +51,7 @@ export function useProducts(options: UseProductsOptions = {}): UseProductsResult
       const queryString = params.toString();
       const url = `/api/products${queryString ? `?${queryString}` : ''}`;
 
-      const response = await fetch(url);
+      const response = await fetch(url, { signal });
       const data: ProductsApiResponse = await response.json();
 
       if (!data.success) {
@@ -60,15 +60,24 @@ export function useProducts(options: UseProductsOptions = {}): UseProductsResult
 
       setProducts(data.data);
     } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        return;
+      }
       setError(err instanceof Error ? err.message : 'Failed to fetch products');
       setProducts([]);
     } finally {
-      setIsLoading(false);
+      if (!signal?.aborted) {
+        setIsLoading(false);
+      }
     }
   }, [options.categoryCode, options.subcategoryCode, options.regionCode, options.countryName, options.isActive]);
 
   useEffect(() => {
-    fetchProducts();
+    const controller = new AbortController();
+    fetchProducts(controller.signal);
+    return () => {
+      controller.abort();
+    };
   }, [fetchProducts]);
 
   return {
@@ -94,7 +103,7 @@ export function useProduct(slugOrModelCode: string | null): UseProductResult {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchProduct = useCallback(async () => {
+  const fetchProduct = useCallback(async (signal?: AbortSignal) => {
     if (!slugOrModelCode) {
       setProduct(null);
       setIsLoading(false);
@@ -105,7 +114,7 @@ export function useProduct(slugOrModelCode: string | null): UseProductResult {
       setIsLoading(true);
       setError(null);
 
-      const response = await fetch(`/api/products/${encodeURIComponent(slugOrModelCode)}`);
+      const response = await fetch(`/api/products/${encodeURIComponent(slugOrModelCode)}`, { signal });
       const data: ProductApiResponse = await response.json();
 
       if (!data.success) {
@@ -114,15 +123,24 @@ export function useProduct(slugOrModelCode: string | null): UseProductResult {
 
       setProduct(data.data);
     } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        return;
+      }
       setError(err instanceof Error ? err.message : 'Failed to fetch product');
       setProduct(null);
     } finally {
-      setIsLoading(false);
+      if (!signal?.aborted) {
+        setIsLoading(false);
+      }
     }
   }, [slugOrModelCode]);
 
   useEffect(() => {
-    fetchProduct();
+    const controller = new AbortController();
+    fetchProduct(controller.signal);
+    return () => {
+      controller.abort();
+    };
   }, [fetchProduct]);
 
   return {

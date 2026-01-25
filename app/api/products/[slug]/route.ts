@@ -7,9 +7,13 @@ let dbInitialized = false;
 
 async function ensureDbInitialized() {
   if (!dbInitialized) {
-    await initializeDatabase();
-    dbInitialized = true;
+    const success = await initializeDatabase();
+    dbInitialized = success;
   }
+}
+
+function escapeRegex(input: string) {
+  return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 interface RouteParams {
@@ -45,7 +49,7 @@ export async function GET(request: Request, { params }: RouteParams) {
     if (!product) {
       // Try finding by modelCode (case-insensitive)
       product = await collection.findOne({
-        modelCode: { $regex: new RegExp(`^${slug}$`, 'i') },
+        modelCode: { $regex: new RegExp(`^${escapeRegex(slug)}$`, 'i') },
         isActive: true
       });
     }

@@ -7,8 +7,8 @@ let dbInitialized = false;
 
 async function ensureDbInitialized() {
   if (!dbInitialized) {
-    await initializeDatabase();
-    dbInitialized = true;
+    const success = await initializeDatabase();
+    dbInitialized = success;
   }
 }
 
@@ -48,12 +48,21 @@ export async function GET(request: Request) {
       filter.subcategoryCode = subcategoryCode;
     }
 
-    if (regionCode) {
-      filter['marketSpecs.regionCode'] = regionCode;
-    }
+    if (regionCode && countryName) {
+      filter.marketSpecs = {
+        $elemMatch: {
+          regionCode,
+          countryName,
+        },
+      };
+    } else {
+      if (regionCode) {
+        filter['marketSpecs.regionCode'] = regionCode;
+      }
 
-    if (countryName) {
-      filter['marketSpecs.countryName'] = countryName;
+      if (countryName) {
+        filter['marketSpecs.countryName'] = countryName;
+      }
     }
 
     if (isActive !== null && isActive !== undefined) {

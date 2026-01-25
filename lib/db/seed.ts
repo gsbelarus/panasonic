@@ -106,10 +106,10 @@ const SEED_PRODUCTS = [
   {
     modelCode: "15AAQ1",
     slug: "15aaq1",
-    categoryCode: "WALL_MOUNT",
-    subcategoryCode: "AUTOMATIC_SHUTTER",
+    categoryCode: "wall-mount",
+    subcategoryCode: "with-shutter",
     categoryName: "Wall Mount",
-    subcategoryName: "Automatic Shutter",
+    subcategoryName: "With Shutter",
     highlights: [
       "Condenser motor with thermal cutoff",
       "Lubricated sintered bush for long life operation",
@@ -186,10 +186,10 @@ const SEED_PRODUCTS = [
   {
     modelCode: "10MMA",
     slug: "10mma",
-    categoryCode: "IN_LINE_CENTRIFUGAL_FAN",
-    subcategoryCode: "IN_LINE_CENTRIFUGAL_FAN",
+    categoryCode: "in-line-centrifugal-fan",
+    subcategoryCode: "low-profile",
     categoryName: "In-line Centrifugal Fan",
-    subcategoryName: "In-Line Centrifugal Fan",
+    subcategoryName: "Low Profile",
     highlights: [
       "Equipped with a high-performance external rotor motor",
       "Premium ball bearings",
@@ -249,10 +249,10 @@ const SEED_PRODUCTS = [
   {
     modelCode: "20AUA",
     slug: "20aua",
-    categoryCode: "WALL_MOUNT",
-    subcategoryCode: "AUTOMATIC_SHUTTER",
+    categoryCode: "wall-mount",
+    subcategoryCode: "with-shutter",
     categoryName: "Wall Mount",
-    subcategoryName: "Automatic Shutter",
+    subcategoryName: "With Shutter",
     highlights: [],
     marketSpecs: [
       {
@@ -275,10 +275,10 @@ const SEED_PRODUCTS = [
   {
     modelCode: "25AUA",
     slug: "25aua",
-    categoryCode: "WALL_MOUNT",
-    subcategoryCode: "AUTOMATIC_SHUTTER",
+    categoryCode: "wall-mount",
+    subcategoryCode: "with-shutter",
     categoryName: "Wall Mount",
-    subcategoryName: "Automatic Shutter",
+    subcategoryName: "With Shutter",
     highlights: [],
     marketSpecs: [
       {
@@ -301,10 +301,10 @@ const SEED_PRODUCTS = [
   {
     modelCode: "30AUA",
     slug: "30aua",
-    categoryCode: "WALL_MOUNT",
-    subcategoryCode: "AUTOMATIC_SHUTTER",
+    categoryCode: "wall-mount",
+    subcategoryCode: "with-shutter",
     categoryName: "Wall Mount",
-    subcategoryName: "Automatic Shutter",
+    subcategoryName: "With Shutter",
     highlights: [],
     marketSpecs: [
       {
@@ -329,10 +329,10 @@ const SEED_PRODUCTS = [
   {
     modelCode: "12MMA",
     slug: "12mma",
-    categoryCode: "IN_LINE_CENTRIFUGAL_FAN",
-    subcategoryCode: "IN_LINE_CENTRIFUGAL_FAN",
+    categoryCode: "in-line-centrifugal-fan",
+    subcategoryCode: "low-profile",
     categoryName: "In-line Centrifugal Fan",
-    subcategoryName: "In-Line Centrifugal Fan",
+    subcategoryName: "Low Profile",
     highlights: [],
     marketSpecs: [
       {
@@ -355,10 +355,10 @@ const SEED_PRODUCTS = [
   {
     modelCode: "15MMA",
     slug: "15mma",
-    categoryCode: "IN_LINE_CENTRIFUGAL_FAN",
-    subcategoryCode: "IN_LINE_CENTRIFUGAL_FAN",
+    categoryCode: "in-line-centrifugal-fan",
+    subcategoryCode: "low-profile",
     categoryName: "In-line Centrifugal Fan",
-    subcategoryName: "In-Line Centrifugal Fan",
+    subcategoryName: "Low Profile",
     highlights: [],
     marketSpecs: [
       {
@@ -381,10 +381,10 @@ const SEED_PRODUCTS = [
   {
     modelCode: "16MMA",
     slug: "16mma",
-    categoryCode: "IN_LINE_CENTRIFUGAL_FAN",
-    subcategoryCode: "IN_LINE_CENTRIFUGAL_FAN",
+    categoryCode: "in-line-centrifugal-fan",
+    subcategoryCode: "low-profile",
     categoryName: "In-line Centrifugal Fan",
-    subcategoryName: "In-Line Centrifugal Fan",
+    subcategoryName: "Low Profile",
     highlights: [],
     marketSpecs: [
       {
@@ -407,10 +407,10 @@ const SEED_PRODUCTS = [
   {
     modelCode: "20MMA",
     slug: "20mma",
-    categoryCode: "IN_LINE_CENTRIFUGAL_FAN",
-    subcategoryCode: "IN_LINE_CENTRIFUGAL_FAN",
+    categoryCode: "in-line-centrifugal-fan",
+    subcategoryCode: "low-profile",
     categoryName: "In-line Centrifugal Fan",
-    subcategoryName: "In-Line Centrifugal Fan",
+    subcategoryName: "Low Profile",
     highlights: [],
     marketSpecs: [
       {
@@ -433,10 +433,10 @@ const SEED_PRODUCTS = [
   {
     modelCode: "25MMA",
     slug: "25mma",
-    categoryCode: "IN_LINE_CENTRIFUGAL_FAN",
-    subcategoryCode: "IN_LINE_CENTRIFUGAL_FAN",
+    categoryCode: "in-line-centrifugal-fan",
+    subcategoryCode: "low-profile",
     categoryName: "In-line Centrifugal Fan",
-    subcategoryName: "In-Line Centrifugal Fan",
+    subcategoryName: "Low Profile",
     highlights: [],
     marketSpecs: [
       {
@@ -459,10 +459,10 @@ const SEED_PRODUCTS = [
   {
     modelCode: "31MMA",
     slug: "31mma",
-    categoryCode: "IN_LINE_CENTRIFUGAL_FAN",
-    subcategoryCode: "IN_LINE_CENTRIFUGAL_FAN",
+    categoryCode: "in-line-centrifugal-fan",
+    subcategoryCode: "low-profile",
     categoryName: "In-line Centrifugal Fan",
-    subcategoryName: "In-Line Centrifugal Fan",
+    subcategoryName: "Low Profile",
     highlights: [],
     marketSpecs: [
       {
