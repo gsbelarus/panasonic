@@ -23,6 +23,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/dotenv-flow": "^3.3.3",
     "@types/node": "^25.0.10",
     "@types/react": "^19",
     "@types/react-dom": "^19",
