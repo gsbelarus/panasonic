@@ -213,9 +213,31 @@ export const ProductInsertSchema = ProductSchema.omit({
 // Update Schema (for partial updates)
 // ============================================================================
 
-export const ProductUpdateSchema = ProductSchema.partial().omit({
-  _id: true,
-  createdAt: true,
+export const ProductUpdateSchema = z.object({
+  // Identity & Classification
+  modelCode: z.string().min(1, 'Model code is required').optional(),
+  slug: z
+    .string()
+    .min(1, 'Slug is required')
+    .regex(slugPattern, 'Slug must be URL-safe (lowercase alphanumeric and hyphens only)')
+    .optional(),
+  categoryCode: z.string().min(1, 'Category code is required').optional(),
+  subcategoryCode: z.string().min(1, 'Subcategory code is required').optional(),
+
+  // Marketing / Content
+  highlights: z.array(z.string()).optional(),
+
+  // Market-Specific Specifications
+  marketSpecs: z.array(ProductMarketSpecSchema).optional(),
+
+  // Relationships
+  relatedModelCodes: z.array(z.string()).optional(),
+
+  // Assets
+  assets: ProductAssetsSchema.optional(),
+
+  // Status
+  isActive: z.boolean().optional(),
 });
 
 // ============================================================================
