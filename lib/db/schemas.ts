@@ -132,6 +132,149 @@ export const SubcategoryResponseSchema = SubcategorySchema.extend({
 });
 
 // ============================================================================
+// Product Schemas
+// ============================================================================
+
+// PQ Curve Point Schema
+const PQPointSchema = z.object({
+  q: z.number(), // air volume (CMH)
+  p: z.number(), // pressure (Pa)
+});
+
+// PQ Curve Series Schema
+export const ProductPQSeriesSchema = z.object({
+  speed: z.string(), // e.g. "hi", "low"
+  dashStyle: z.string().optional(), // e.g. "Solid", "Dashed"
+  highlight: z.boolean().optional(),
+  highlightKey: z.string().optional(),
+  points: z.array(PQPointSchema),
+});
+
+// Air Volume Range Schema
+const AirVolumeRangeSchema = z.object({
+  min: z.number(),
+  max: z.number(),
+  unit: z.literal('CMH'),
+});
+
+// Static Pressure Range Schema
+const StaticPressureRangeSchema = z.object({
+  min: z.number(),
+  max: z.number(),
+  unit: z.literal('Pa'),
+});
+
+// Noise Schema
+const NoiseSchema = z.object({
+  value: z.number(),
+  unit: z.literal('dBA'),
+});
+
+// Fan Specification Schema
+const FanSpecSchema = z.object({
+  fanSubType: z.string().nullable().optional(),
+  powerConsumptionW: z.number().nullable().optional(),
+  fanSpeedRpm: z.number().nullable().optional(),
+});
+
+// Construction Schema
+const ConstructionSchema = z.object({
+  ductSizeMm: z.number().nullable().optional(),
+  speedControl: z.enum(['Single', 'Double', 'Variable']).nullable().optional(),
+});
+
+// Working Point Schema
+const WorkingPointSchema = z.object({
+  speed: z.string().nullable().optional(), // e.g. "Hi", "Low"
+  airVolume: AirVolumeRangeSchema,
+  staticPressure: StaticPressureRangeSchema,
+  noise: NoiseSchema,
+});
+
+// Product Market Spec Schema (region/country specific specifications)
+export const ProductMarketSpecSchema = z.object({
+  regionCode: z.string(),
+  countryName: z.string(),
+  // Optional resolved refs (populated after seeding)
+  regionId: objectIdSchema.optional(),
+  countryId: objectIdSchema.optional(),
+  // Electrical specs
+  voltageV: z.number().optional(),
+  frequencyHz: z.number().optional(),
+  // Specification blocks
+  fanSpec: FanSpecSchema,
+  construction: ConstructionSchema,
+  workingPoint: WorkingPointSchema,
+  // PQ curve data series (optional)
+  pqCurves: z.array(ProductPQSeriesSchema).optional(),
+});
+
+// Asset Document Schema
+const AssetDocumentSchema = z.object({
+  label: z.string(),
+  url: z.string(),
+});
+
+// Assets Schema
+const AssetsSchema = z.object({
+  imageUrls: z.array(z.string()),
+  documents: z.array(AssetDocumentSchema),
+});
+
+// Product Schema (MongoDB document)
+export const ProductSchema = z.object({
+  _id: objectIdSchema.optional(),
+  // Identity
+  modelCode: z.string().min(1, 'Model code is required'),
+  slug: z.string().min(1, 'Slug is required'),
+  // Classification
+  categoryCode: z.string().min(1, 'Category code is required'),
+  subcategoryCode: z.string().min(1, 'Subcategory code is required'),
+  categoryName: z.string().optional(),
+  subcategoryName: z.string().optional(),
+  // Optional resolved refs
+  categoryId: objectIdSchema.optional(),
+  subcategoryId: objectIdSchema.optional(),
+  // Marketing
+  highlights: z.array(z.string()),
+  // Market-specific specs
+  marketSpecs: z.array(ProductMarketSpecSchema),
+  // Related products
+  relatedModelCodes: z.array(z.string()),
+  // Assets
+  assets: AssetsSchema,
+  // Status
+  isActive: z.boolean(),
+  createdAt: z.date().optional(),
+  updatedAt: z.date().optional(),
+});
+
+// Create Product Schema (for API input)
+export const CreateProductSchema = ProductSchema.omit({
+  _id: true,
+  categoryId: true,
+  subcategoryId: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Update Product Schema (partial)
+export const UpdateProductSchema = CreateProductSchema.partial();
+
+// Product Response Schema (for API output)
+export const ProductResponseSchema = ProductSchema.extend({
+  _id: z.string(),
+  categoryId: z.string().optional(),
+  subcategoryId: z.string().optional(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+  marketSpecs: z.array(ProductMarketSpecSchema.extend({
+    regionId: z.string().optional(),
+    countryId: z.string().optional(),
+  })),
+});
+
+// ============================================================================
 // API Response Schemas (Categories & Subcategories)
 // ============================================================================
 
@@ -143,6 +286,16 @@ export const CategoriesApiResponseSchema = z.object({
 export const SubcategoriesApiResponseSchema = z.object({
   success: z.boolean(),
   data: z.array(SubcategoryResponseSchema),
+});
+
+export const ProductsApiResponseSchema = z.object({
+  success: z.boolean(),
+  data: z.array(ProductResponseSchema),
+});
+
+export const ProductApiResponseSchema = z.object({
+  success: z.boolean(),
+  data: ProductResponseSchema,
 });
 
 // ============================================================================
@@ -171,6 +324,16 @@ export type SubcategoryResponse = z.infer<typeof SubcategoryResponseSchema>;
 
 export type CategoriesApiResponse = z.infer<typeof CategoriesApiResponseSchema>;
 export type SubcategoriesApiResponse = z.infer<typeof SubcategoriesApiResponseSchema>;
+
+// Product types
+export type ProductPQSeries = z.infer<typeof ProductPQSeriesSchema>;
+export type ProductMarketSpec = z.infer<typeof ProductMarketSpecSchema>;
+export type Product = z.infer<typeof ProductSchema>;
+export type CreateProduct = z.infer<typeof CreateProductSchema>;
+export type UpdateProduct = z.infer<typeof UpdateProductSchema>;
+export type ProductResponse = z.infer<typeof ProductResponseSchema>;
+export type ProductsApiResponse = z.infer<typeof ProductsApiResponseSchema>;
+export type ProductApiResponse = z.infer<typeof ProductApiResponseSchema>;
 
 // ============================================================================
 // Validation Helper Functions
@@ -263,6 +426,44 @@ export function validateCreateCategory(data: unknown): CreateCategory {
  */
 export function validateCreateSubcategory(data: unknown): CreateSubcategory {
   return CreateSubcategorySchema.parse(data);
+}
+
+/**
+ * Parse and validate a product document from MongoDB
+ */
+export function parseProduct(doc: unknown): ProductResponse {
+  const normalized = normalizeMongoDocument(doc);
+  // Deep normalize marketSpecs array for ObjectIds
+  if (Array.isArray(normalized.marketSpecs)) {
+    normalized.marketSpecs = normalized.marketSpecs.map((spec: unknown) => {
+      if (spec && typeof spec === 'object') {
+        return normalizeMongoDocument(spec);
+      }
+      return spec;
+    });
+  }
+  return ProductResponseSchema.parse(normalized);
+}
+
+/**
+ * Parse and validate an array of product documents
+ */
+export function parseProducts(docs: unknown[]): ProductResponse[] {
+  return docs.map(parseProduct);
+}
+
+/**
+ * Validate create product payload
+ */
+export function validateCreateProduct(data: unknown): CreateProduct {
+  return CreateProductSchema.parse(data);
+}
+
+/**
+ * Validate update product payload
+ */
+export function validateUpdateProduct(data: unknown): UpdateProduct {
+  return UpdateProductSchema.parse(data);
 }
 
 /**

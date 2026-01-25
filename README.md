@@ -83,6 +83,59 @@ The seeding process is **idempotent** - it's safe to run multiple times without 
 | `countries` | Countries with regional association | `regionCode`, `iso2`, `name`, `voltage`, `frequency` |
 | `categories` | Product categories | `code`, `name`, `icon`, `sortOrder` |
 | `subcategories` | Product subcategories | `categoryCode`, `code`, `name`, `sortOrder` |
+| `products` | Product catalog with market-specific specs | `modelCode`, `slug`, `categoryCode`, `subcategoryCode`, `highlights`, `marketSpecs`, `relatedModelCodes`, `assets`, `isActive` |
+
+#### Products Collection Schema
+
+The `products` collection stores ventilation product data with market-specific specifications:
+
+```typescript
+{
+  _id: ObjectId,
+  modelCode: string,           // Unique product identifier (e.g., "15AAQ1")
+  slug: string,                // URL-friendly identifier (e.g., "15aaq1")
+  categoryCode: string,        // Reference to categories collection
+  subcategoryCode: string,     // Reference to subcategories collection
+  categoryName?: string,       // Denormalized for UI convenience
+  subcategoryName?: string,    // Denormalized for UI convenience
+  highlights: string[],        // Marketing bullet points
+  marketSpecs: [{              // Market-specific specifications
+    regionCode: string,        // e.g., "AFRICA", "MIDDLE_EAST"
+    countryName: string,       // e.g., "Sudan", "UAE"
+    voltageV?: number,         // Electrical voltage
+    frequencyHz?: number,      // Electrical frequency
+    fanSpec: {
+      powerConsumptionW?: number,
+      fanSpeedRpm?: number,
+      fanSubType?: string
+    },
+    construction: {
+      ductSizeMm?: number,
+      speedControl?: "Single" | "Double" | "Variable"
+    },
+    workingPoint: {
+      speed?: string,
+      airVolume: { min: number, max: number, unit: "CMH" },
+      staticPressure: { min: number, max: number, unit: "Pa" },
+      noise: { value: number, unit: "dBA" }
+    },
+    pqCurves?: [{              // PQ curve data for charting
+      speed: string,
+      dashStyle?: string,
+      highlight?: boolean,
+      points: [{ q: number, p: number }]
+    }]
+  }],
+  relatedModelCodes: string[], // Related product model codes
+  assets: {
+    imageUrls: string[],
+    documents: [{ label: string, url: string }]
+  },
+  isActive: boolean,
+  createdAt: Date,
+  updatedAt: Date
+}
+```
 
 ### Development
 
@@ -119,7 +172,10 @@ npm start
 │   │   ├── regions/route.ts             # GET /api/regions - fetch all regions
 │   │   ├── countries/route.ts           # GET /api/countries - fetch countries (optional ?regionCode filter)
 │   │   ├── categories/route.ts          # GET /api/categories - fetch all categories
-│   │   └── subcategories/route.ts       # GET /api/subcategories - fetch subcategories (optional ?categoryCode filter)
+│   │   ├── subcategories/route.ts       # GET /api/subcategories - fetch subcategories (optional ?categoryCode filter)
+│   │   └── products/
+│   │       ├── route.ts                 # GET /api/products - fetch products with filters
+│   │       └── [slug]/route.ts          # GET /api/products/:slug - fetch single product
 │   ├── globals.css                      # Global styles and CSS variables
 │   ├── layout.tsx                       # Root layout
 │   └── page.tsx                         # Home page (main entry point)
@@ -137,7 +193,8 @@ npm start
 │   └── ResultsBanner.tsx                # Search results banner
 ├── hooks/
 │   ├── useRegionsAndCountries.ts        # React hooks for fetching regions/countries
-│   └── useCategoriesAndSubcategories.ts # React hooks for fetching categories/subcategories
+│   ├── useCategoriesAndSubcategories.ts # React hooks for fetching categories/subcategories
+│   └── useProducts.ts                   # React hooks for fetching products
 ├── lib/
 │   └── db/
 │       ├── index.ts                     # Re-exports all db utilities

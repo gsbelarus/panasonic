@@ -1,6 +1,6 @@
 import { connectToDatabase, COLLECTIONS } from './connection';
-import type { CreateRegion, CreateCountry, CreateCategory, CreateSubcategory } from './schemas';
-import { validateCreateRegion, validateCreateCountry, validateCreateCategory, validateCreateSubcategory } from './schemas';
+import type { CreateRegion, CreateCountry, CreateCategory, CreateSubcategory, CreateProduct } from './schemas';
+import { validateCreateRegion, validateCreateCountry, validateCreateCategory, validateCreateSubcategory, validateCreateProduct } from './schemas';
 
 // ============================================================================
 // Seed Data - Extracted from existing hardcoded values
@@ -102,6 +102,391 @@ const SEED_SUBCATEGORIES: CreateSubcategory[] = [
   { code: 'controls', name: 'Controls', categoryCode: 'accessories', sortOrder: 2 },
 ];
 
+const SEED_PRODUCTS = [
+  {
+    modelCode: "15AAQ1",
+    slug: "15aaq1",
+    categoryCode: "WALL_MOUNT",
+    subcategoryCode: "AUTOMATIC_SHUTTER",
+    categoryName: "Wall Mount",
+    subcategoryName: "Automatic Shutter",
+    highlights: [
+      "Condenser motor with thermal cutoff",
+      "Lubricated sintered bush for long life operation",
+      "High performance propeller fan adopted",
+      "Automatic shutter with plastic cushions",
+      "Orifice equipped with oil cup"
+    ],
+    marketSpecs: [
+      {
+        regionCode: "AFRICA",
+        countryName: "Sudan",
+        voltageV: 230,
+        frequencyHz: 50,
+        fanSpec: {
+          fanSubType: null,
+          powerConsumptionW: 15,
+          fanSpeedRpm: 1480
+        },
+        construction: {
+          ductSizeMm: null,
+          speedControl: "Single"
+        },
+        workingPoint: {
+          speed: "Hi",
+          airVolume: { min: 0, max: 400, unit: "CMH" },
+          staticPressure: { min: 0, max: 50, unit: "Pa" },
+          noise: { value: 31, unit: "dBA" }
+        },
+        pqCurves: [
+          {
+            speed: "hi",
+            dashStyle: "Solid",
+            highlight: false,
+            highlightKey: "",
+            points: [
+              { q: 32, p: 0 },
+              { q: 30, p: 8 },
+              { q: 28, p: 17 },
+              { q: 27, p: 24 },
+              { q: 25, p: 32 },
+              { q: 24, p: 40 },
+              { q: 22, p: 50 },
+              { q: 21, p: 58 },
+              { q: 20, p: 68 },
+              { q: 18, p: 79 },
+              { q: 17, p: 88 },
+              { q: 16, p: 98 },
+              { q: 15, p: 110 },
+              { q: 14, p: 122 },
+              { q: 13, p: 133 },
+              { q: 12, p: 146 },
+              { q: 11, p: 162 },
+              { q: 10, p: 178 },
+              { q: 9, p: 192 },
+              { q: 8, p: 206 },
+              { q: 7, p: 218 },
+              { q: 6, p: 231 },
+              { q: 5, p: 246 },
+              { q: 4, p: 253 },
+              { q: 3, p: 266 },
+              { q: 2, p: 278 },
+              { q: 1, p: 288 },
+              { q: 0, p: 294 }
+            ]
+          }
+        ]
+      }
+    ],
+    relatedModelCodes: ["20AUA", "25AUA", "30AUA"],
+    assets: { imageUrls: [], documents: [] },
+    isActive: true
+  },
+
+  {
+    modelCode: "10MMA",
+    slug: "10mma",
+    categoryCode: "IN_LINE_CENTRIFUGAL_FAN",
+    subcategoryCode: "IN_LINE_CENTRIFUGAL_FAN",
+    categoryName: "In-line Centrifugal Fan",
+    subcategoryName: "In-Line Centrifugal Fan",
+    highlights: [
+      "Equipped with a high-performance external rotor motor",
+      "Premium ball bearings",
+      "Integrated thermal protector",
+      "Long Operational Lifespan",
+      "Low Noise & Vibration",
+      "Optimized Airflow Design",
+      "Motor Insulation Class F",
+      "IP protection: IP44",
+      "AMCA Certified – Specifications available"
+    ],
+    marketSpecs: [
+      {
+        regionCode: "MIDDLE_EAST",
+        countryName: "UAE",
+        voltageV: 240,
+        frequencyHz: 50,
+        fanSpec: {
+          fanSubType: null,
+          powerConsumptionW: 57,
+          fanSpeedRpm: null
+        },
+        construction: {
+          ductSizeMm: 100,
+          speedControl: "Single"
+        },
+        workingPoint: {
+          speed: "Hi",
+          airVolume: { min: 0, max: 300, unit: "CMH" },
+          staticPressure: { min: 0, max: 400, unit: "Pa" },
+          noise: { value: 44, unit: "dBA" }
+        },
+        pqCurves: [
+          {
+            speed: "hi",
+            dashStyle: "Solid",
+            highlight: false,
+            highlightKey: "",
+            points: [
+              { q: 360, p: 0 },
+              { q: 229, p: 112 },
+              { q: 57, p: 217 },
+              { q: 48, p: 223 },
+              { q: 0, p: 249 }
+            ]
+          }
+        ]
+      }
+    ],
+    relatedModelCodes: ["12MMA", "15MMA", "16MMA", "20MMA", "25MMA", "31MMA"],
+    assets: { imageUrls: [], documents: [] },
+    isActive: true
+  },
+
+  // Related products captured from the “Related products” panel (minimal seed fields)
+  // These are intentionally light; details can be enriched later by adding full marketSpecs.
+  {
+    modelCode: "20AUA",
+    slug: "20aua",
+    categoryCode: "WALL_MOUNT",
+    subcategoryCode: "AUTOMATIC_SHUTTER",
+    categoryName: "Wall Mount",
+    subcategoryName: "Automatic Shutter",
+    highlights: [],
+    marketSpecs: [
+      {
+        regionCode: "AFRICA",
+        countryName: "Sudan",
+        fanSpec: { fanSubType: null, powerConsumptionW: null, fanSpeedRpm: null },
+        construction: { ductSizeMm: null, speedControl: null },
+        workingPoint: {
+          speed: null,
+          airVolume: { min: 800, max: 800, unit: "CMH" },
+          staticPressure: { min: 50, max: 50, unit: "Pa" },
+          noise: { value: 36.5, unit: "dBA" }
+        }
+      }
+    ],
+    relatedModelCodes: [],
+    assets: { imageUrls: [], documents: [] },
+    isActive: true
+  },
+  {
+    modelCode: "25AUA",
+    slug: "25aua",
+    categoryCode: "WALL_MOUNT",
+    subcategoryCode: "AUTOMATIC_SHUTTER",
+    categoryName: "Wall Mount",
+    subcategoryName: "Automatic Shutter",
+    highlights: [],
+    marketSpecs: [
+      {
+        regionCode: "AFRICA",
+        countryName: "Sudan",
+        fanSpec: { fanSubType: null, powerConsumptionW: null, fanSpeedRpm: null },
+        construction: { ductSizeMm: null, speedControl: null },
+        workingPoint: {
+          speed: null,
+          airVolume: { min: 1100, max: 1100, unit: "CMH" },
+          staticPressure: { min: 50, max: 50, unit: "Pa" },
+          noise: { value: 38.5, unit: "dBA" }
+        }
+      }
+    ],
+    relatedModelCodes: [],
+    assets: { imageUrls: [], documents: [] },
+    isActive: true
+  },
+  {
+    modelCode: "30AUA",
+    slug: "30aua",
+    categoryCode: "WALL_MOUNT",
+    subcategoryCode: "AUTOMATIC_SHUTTER",
+    categoryName: "Wall Mount",
+    subcategoryName: "Automatic Shutter",
+    highlights: [],
+    marketSpecs: [
+      {
+        regionCode: "AFRICA",
+        countryName: "Sudan",
+        fanSpec: { fanSubType: null, powerConsumptionW: null, fanSpeedRpm: null },
+        construction: { ductSizeMm: null, speedControl: null },
+        workingPoint: {
+          speed: null,
+          airVolume: { min: 1300, max: 1300, unit: "CMH" },
+          staticPressure: { min: 40, max: 40, unit: "Pa" },
+          noise: { value: 38, unit: "dBA" }
+        }
+      }
+    ],
+    relatedModelCodes: [],
+    assets: { imageUrls: [], documents: [] },
+    isActive: true
+  },
+
+  // Related MMA series (minimal seed fields from related panel)
+  {
+    modelCode: "12MMA",
+    slug: "12mma",
+    categoryCode: "IN_LINE_CENTRIFUGAL_FAN",
+    subcategoryCode: "IN_LINE_CENTRIFUGAL_FAN",
+    categoryName: "In-line Centrifugal Fan",
+    subcategoryName: "In-Line Centrifugal Fan",
+    highlights: [],
+    marketSpecs: [
+      {
+        regionCode: "MIDDLE_EAST",
+        countryName: "UAE",
+        fanSpec: { fanSubType: null, powerConsumptionW: null, fanSpeedRpm: null },
+        construction: { ductSizeMm: null, speedControl: null },
+        workingPoint: {
+          speed: null,
+          airVolume: { min: 350, max: 350, unit: "CMH" },
+          staticPressure: { min: 400, max: 400, unit: "Pa" },
+          noise: { value: 45, unit: "dBA" }
+        }
+      }
+    ],
+    relatedModelCodes: [],
+    assets: { imageUrls: [], documents: [] },
+    isActive: true
+  },
+  {
+    modelCode: "15MMA",
+    slug: "15mma",
+    categoryCode: "IN_LINE_CENTRIFUGAL_FAN",
+    subcategoryCode: "IN_LINE_CENTRIFUGAL_FAN",
+    categoryName: "In-line Centrifugal Fan",
+    subcategoryName: "In-Line Centrifugal Fan",
+    highlights: [],
+    marketSpecs: [
+      {
+        regionCode: "MIDDLE_EAST",
+        countryName: "UAE",
+        fanSpec: { fanSubType: null, powerConsumptionW: null, fanSpeedRpm: null },
+        construction: { ductSizeMm: null, speedControl: null },
+        workingPoint: {
+          speed: null,
+          airVolume: { min: 700, max: 700, unit: "CMH" },
+          staticPressure: { min: 500, max: 500, unit: "Pa" },
+          noise: { value: 46, unit: "dBA" }
+        }
+      }
+    ],
+    relatedModelCodes: [],
+    assets: { imageUrls: [], documents: [] },
+    isActive: true
+  },
+  {
+    modelCode: "16MMA",
+    slug: "16mma",
+    categoryCode: "IN_LINE_CENTRIFUGAL_FAN",
+    subcategoryCode: "IN_LINE_CENTRIFUGAL_FAN",
+    categoryName: "In-line Centrifugal Fan",
+    subcategoryName: "In-Line Centrifugal Fan",
+    highlights: [],
+    marketSpecs: [
+      {
+        regionCode: "MIDDLE_EAST",
+        countryName: "UAE",
+        fanSpec: { fanSubType: null, powerConsumptionW: null, fanSpeedRpm: null },
+        construction: { ductSizeMm: null, speedControl: null },
+        workingPoint: {
+          speed: null,
+          airVolume: { min: 800, max: 800, unit: "CMH" },
+          staticPressure: { min: 600, max: 600, unit: "Pa" },
+          noise: { value: 47, unit: "dBA" }
+        }
+      }
+    ],
+    relatedModelCodes: [],
+    assets: { imageUrls: [], documents: [] },
+    isActive: true
+  },
+  {
+    modelCode: "20MMA",
+    slug: "20mma",
+    categoryCode: "IN_LINE_CENTRIFUGAL_FAN",
+    subcategoryCode: "IN_LINE_CENTRIFUGAL_FAN",
+    categoryName: "In-line Centrifugal Fan",
+    subcategoryName: "In-Line Centrifugal Fan",
+    highlights: [],
+    marketSpecs: [
+      {
+        regionCode: "MIDDLE_EAST",
+        countryName: "UAE",
+        fanSpec: { fanSubType: null, powerConsumptionW: null, fanSpeedRpm: null },
+        construction: { ductSizeMm: null, speedControl: null },
+        workingPoint: {
+          speed: null,
+          airVolume: { min: 1000, max: 1000, unit: "CMH" },
+          staticPressure: { min: 700, max: 700, unit: "Pa" },
+          noise: { value: 54, unit: "dBA" }
+        }
+      }
+    ],
+    relatedModelCodes: [],
+    assets: { imageUrls: [], documents: [] },
+    isActive: true
+  },
+  {
+    modelCode: "25MMA",
+    slug: "25mma",
+    categoryCode: "IN_LINE_CENTRIFUGAL_FAN",
+    subcategoryCode: "IN_LINE_CENTRIFUGAL_FAN",
+    categoryName: "In-line Centrifugal Fan",
+    subcategoryName: "In-Line Centrifugal Fan",
+    highlights: [],
+    marketSpecs: [
+      {
+        regionCode: "MIDDLE_EAST",
+        countryName: "UAE",
+        fanSpec: { fanSubType: null, powerConsumptionW: null, fanSpeedRpm: null },
+        construction: { ductSizeMm: null, speedControl: null },
+        workingPoint: {
+          speed: null,
+          airVolume: { min: 1000, max: 1000, unit: "CMH" },
+          staticPressure: { min: 697, max: 697, unit: "Pa" },
+          noise: { value: 55, unit: "dBA" }
+        }
+      }
+    ],
+    relatedModelCodes: [],
+    assets: { imageUrls: [], documents: [] },
+    isActive: true
+  },
+  {
+    modelCode: "31MMA",
+    slug: "31mma",
+    categoryCode: "IN_LINE_CENTRIFUGAL_FAN",
+    subcategoryCode: "IN_LINE_CENTRIFUGAL_FAN",
+    categoryName: "In-line Centrifugal Fan",
+    subcategoryName: "In-Line Centrifugal Fan",
+    highlights: [],
+    marketSpecs: [
+      {
+        regionCode: "MIDDLE_EAST",
+        countryName: "UAE",
+        fanSpec: { fanSubType: null, powerConsumptionW: null, fanSpeedRpm: null },
+        construction: { ductSizeMm: null, speedControl: null },
+        workingPoint: {
+          speed: null,
+          airVolume: { min: 1800, max: 1800, unit: "CMH" },
+          staticPressure: { min: 800, max: 800, unit: "Pa" },
+          noise: { value: 57, unit: "dBA" }
+        }
+      }
+    ],
+    relatedModelCodes: [],
+    assets: { imageUrls: [], documents: [] },
+    isActive: true
+  }
+];
+
+// Export for external use if needed
+export { SEED_PRODUCTS };
+
 // ============================================================================
 // Index Creation
 // ============================================================================
@@ -158,6 +543,48 @@ async function createIndexes(): Promise<void> {
   await db.collection(COLLECTIONS.SUBCATEGORIES).createIndex(
     { categoryCode: 1, sortOrder: 1 },
     { name: 'idx_subcategories_sort_order' }
+  );
+
+  // Create unique index on products.modelCode
+  await db.collection(COLLECTIONS.PRODUCTS).createIndex(
+    { modelCode: 1 },
+    { unique: true, name: 'idx_products_model_code_unique' }
+  );
+
+  // Create index on products.slug for URL lookups
+  await db.collection(COLLECTIONS.PRODUCTS).createIndex(
+    { slug: 1 },
+    { unique: true, name: 'idx_products_slug_unique' }
+  );
+
+  // Create index on products.categoryCode for filtering
+  await db.collection(COLLECTIONS.PRODUCTS).createIndex(
+    { categoryCode: 1 },
+    { name: 'idx_products_category_code' }
+  );
+
+  // Create index on products.subcategoryCode for filtering
+  await db.collection(COLLECTIONS.PRODUCTS).createIndex(
+    { subcategoryCode: 1 },
+    { name: 'idx_products_subcategory_code' }
+  );
+
+  // Create index on products.marketSpecs.regionCode for market filtering
+  await db.collection(COLLECTIONS.PRODUCTS).createIndex(
+    { 'marketSpecs.regionCode': 1 },
+    { name: 'idx_products_market_region_code' }
+  );
+
+  // Create index on products.marketSpecs.countryName for market filtering
+  await db.collection(COLLECTIONS.PRODUCTS).createIndex(
+    { 'marketSpecs.countryName': 1 },
+    { name: 'idx_products_market_country_name' }
+  );
+
+  // Create index on products.isActive for filtering active products
+  await db.collection(COLLECTIONS.PRODUCTS).createIndex(
+    { isActive: 1 },
+    { name: 'idx_products_is_active' }
   );
 
   console.log('[Seed] Indexes created successfully');
@@ -336,6 +763,46 @@ async function seedSubcategories(): Promise<number> {
   return insertedCount;
 }
 
+/**
+ * Seed products collection with initial data
+ * Uses bulkWrite with upsert to ensure idempotency
+ */
+async function seedProducts(): Promise<number> {
+  const { db } = await connectToDatabase();
+  const collection = db.collection(COLLECTIONS.PRODUCTS);
+
+  const now = new Date();
+
+  // Prepare bulk write operations for efficiency
+  const bulkOps = SEED_PRODUCTS.map((productData) => {
+    // Validate the data using Zod
+    const validatedData = validateCreateProduct(productData as CreateProduct);
+
+    return {
+      updateOne: {
+        filter: { modelCode: validatedData.modelCode },
+        update: {
+          $setOnInsert: {
+            ...validatedData,
+            createdAt: now,
+          },
+          $set: {
+            updatedAt: now,
+          },
+        },
+        upsert: true,
+      },
+    };
+  });
+
+  if (bulkOps.length === 0) {
+    return 0;
+  }
+
+  const result = await collection.bulkWrite(bulkOps);
+  return result.upsertedCount;
+}
+
 // ============================================================================
 // Main Seeding Function
 // ============================================================================
@@ -345,6 +812,7 @@ export interface SeedResult {
   countriesSeeded: number;
   categoriesSeeded: number;
   subcategoriesSeeded: number;
+  productsSeeded: number;
   indexesCreated: boolean;
   skipped: boolean;
 }
@@ -361,6 +829,7 @@ export async function seedDatabase(force = false): Promise<SeedResult> {
     countriesSeeded: 0,
     categoriesSeeded: 0,
     subcategoriesSeeded: 0,
+    productsSeeded: 0,
     indexesCreated: false,
     skipped: false,
   };
@@ -375,8 +844,9 @@ export async function seedDatabase(force = false): Promise<SeedResult> {
     const countriesNeedSeeding = force || await needsSeeding(COLLECTIONS.COUNTRIES);
     const categoriesNeedSeeding = force || await needsSeeding(COLLECTIONS.CATEGORIES);
     const subcategoriesNeedSeeding = force || await needsSeeding(COLLECTIONS.SUBCATEGORIES);
+    const productsNeedSeeding = force || await needsSeeding(COLLECTIONS.PRODUCTS);
 
-    if (!regionsNeedSeeding && !countriesNeedSeeding && !categoriesNeedSeeding && !subcategoriesNeedSeeding) {
+    if (!regionsNeedSeeding && !countriesNeedSeeding && !categoriesNeedSeeding && !subcategoriesNeedSeeding && !productsNeedSeeding) {
       console.log('[Seed] Database already seeded, skipping...');
       result.skipped = true;
       return result;
@@ -404,6 +874,12 @@ export async function seedDatabase(force = false): Promise<SeedResult> {
     if (subcategoriesNeedSeeding) {
       result.subcategoriesSeeded = await seedSubcategories();
       console.log(`[Seed] Seeded ${result.subcategoriesSeeded} subcategories`);
+    }
+
+    // Seed products if needed
+    if (productsNeedSeeding) {
+      result.productsSeeded = await seedProducts();
+      console.log(`[Seed] Seeded ${result.productsSeeded} products`);
     }
 
     console.log('[Seed] Database seeding completed successfully');
