@@ -1,13 +1,6 @@
 import { z } from 'zod';
-import { ObjectId } from 'mongodb';
-
-// Custom Zod schema for MongoDB ObjectId
-const objectIdSchema = z.union([
-  z.string().refine((val) => ObjectId.isValid(val), {
-    message: 'Invalid ObjectId string',
-  }),
-  z.instanceof(ObjectId),
-]);
+import { normalizeMongoDocument } from './normalizeMongoDocument';
+import { objectIdSchema } from './objectIdSchema';
 
 // ============================================================================
 // Region Schema
@@ -265,27 +258,8 @@ export function validateCreateSubcategory(data: unknown): CreateSubcategory {
   return CreateSubcategorySchema.parse(data);
 }
 
-/**
- * Normalize MongoDB document for API response
- * - Converts ObjectId to string
- * - Converts Date objects to ISO strings
- */
-function normalizeMongoDocument(doc: unknown): Record<string, unknown> {
-  if (!doc || typeof doc !== 'object') {
-    throw new Error('Invalid document');
-  }
+// ============================================================================
+// Re-export Products Schemas and Types
+// ============================================================================
 
-  const result: Record<string, unknown> = {};
-
-  for (const [key, value] of Object.entries(doc as Record<string, unknown>)) {
-    if (value instanceof ObjectId) {
-      result[key] = value.toHexString();
-    } else if (value instanceof Date) {
-      result[key] = value.toISOString();
-    } else {
-      result[key] = value;
-    }
-  }
-
-  return result;
-}
+export * from './products/schema';

@@ -1,6 +1,8 @@
 import { connectToDatabase, COLLECTIONS } from './connection';
 import type { CreateRegion, CreateCountry, CreateCategory, CreateSubcategory } from './schemas';
 import { validateCreateRegion, validateCreateCountry, validateCreateCategory, validateCreateSubcategory } from './schemas';
+import { createProductsIndexes } from './products/indexes';
+import { bootstrapProducts } from './products/seed';
 
 // ============================================================================
 // Seed Data - Extracted from existing hardcoded values
@@ -345,6 +347,7 @@ export interface SeedResult {
   countriesSeeded: number;
   categoriesSeeded: number;
   subcategoriesSeeded: number;
+  productsSeeded: number;
   indexesCreated: boolean;
   skipped: boolean;
 }
@@ -361,6 +364,7 @@ export async function seedDatabase(force = false): Promise<SeedResult> {
     countriesSeeded: 0,
     categoriesSeeded: 0,
     subcategoriesSeeded: 0,
+    productsSeeded: 0,
     indexesCreated: false,
     skipped: false,
   };
@@ -379,32 +383,42 @@ export async function seedDatabase(force = false): Promise<SeedResult> {
     if (!regionsNeedSeeding && !countriesNeedSeeding && !categoriesNeedSeeding && !subcategoriesNeedSeeding) {
       console.log('[Seed] Database already seeded, skipping...');
       result.skipped = true;
-      return result;
+    } else {
+      // Seed regions if needed
+      if (regionsNeedSeeding) {
+        result.regionsSeeded = await seedRegions();
+        console.log(`[Seed] Seeded ${result.regionsSeeded} regions`);
+      }
+
+      // Seed countries if needed
+      if (countriesNeedSeeding) {
+        result.countriesSeeded = await seedCountries();
+        console.log(`[Seed] Seeded ${result.countriesSeeded} countries`);
+      }
+
+      // Seed categories if needed
+      if (categoriesNeedSeeding) {
+        result.categoriesSeeded = await seedCategories();
+        console.log(`[Seed] Seeded ${result.categoriesSeeded} categories`);
+      }
+
+      // Seed subcategories if needed
+      if (subcategoriesNeedSeeding) {
+        result.subcategoriesSeeded = await seedSubcategories();
+        console.log(`[Seed] Seeded ${result.subcategoriesSeeded} subcategories`);
+      }
     }
 
-    // Seed regions if needed
-    if (regionsNeedSeeding) {
-      result.regionsSeeded = await seedRegions();
-      console.log(`[Seed] Seeded ${result.regionsSeeded} regions`);
-    }
-
-    // Seed countries if needed
-    if (countriesNeedSeeding) {
-      result.countriesSeeded = await seedCountries();
-      console.log(`[Seed] Seeded ${result.countriesSeeded} countries`);
-    }
-
-    // Seed categories if needed
-    if (categoriesNeedSeeding) {
-      result.categoriesSeeded = await seedCategories();
-      console.log(`[Seed] Seeded ${result.categoriesSeeded} categories`);
-    }
-
-    // Seed subcategories if needed
-    if (subcategoriesNeedSeeding) {
-      result.subcategoriesSeeded = await seedSubcategories();
-      console.log(`[Seed] Seeded ${result.subcategoriesSeeded} subcategories`);
-    }
+    // Bootstrap products collection AFTER all references are seeded
+    // Products may reference regions, countries, categories, and subcategories
+    const { db } = await connectToDatabase();
+    const productsResult = await bootstrapProducts(
+      db,
+      COLLECTIONS.PRODUCTS,
+      createProductsIndexes,
+      force
+    );
+    result.productsSeeded = productsResult.inserted;
 
     console.log('[Seed] Database seeding completed successfully');
     return result;
