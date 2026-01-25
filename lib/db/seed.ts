@@ -1,6 +1,6 @@
 import { connectToDatabase, COLLECTIONS } from './connection';
-import type { CreateRegion, CreateCountry, CreateCategory, CreateSubcategory } from './schemas';
-import { validateCreateRegion, validateCreateCountry, validateCreateCategory, validateCreateSubcategory } from './schemas';
+import type { CreateRegion, CreateCountry, CreateCategory, CreateSubcategory, CreateStore } from './schemas';
+import { validateCreateRegion, validateCreateCountry, validateCreateCategory, validateCreateSubcategory, validateCreateStore } from './schemas';
 import { createProductsIndexes } from './products/indexes';
 import { bootstrapProducts } from './products/seed';
 
@@ -104,6 +104,383 @@ const SEED_SUBCATEGORIES: CreateSubcategory[] = [
   { code: 'controls', name: 'Controls', categoryCode: 'accessories', sortOrder: 2 },
 ];
 
+/**
+ * Initial stores data - 2-3 stores per country
+ * Each store has realistic mocked data with proper referential integrity
+ */
+const SEED_STORES: Omit<CreateStore, 'isActive'>[] = [
+  // ========== AFRICA ==========
+  // Egypt (EG)
+  {
+    regionCode: 'africa',
+    countryIso2: 'EG',
+    countryRegion: 'Cairo Governorate',
+    city: 'Cairo',
+    name: 'Cairo Electronics Hub',
+    phones: ['+20 2 2345 6789'],
+    location: { lat: 30.0444, lng: 31.2357 },
+    geo: { type: 'Point', coordinates: [31.2357, 30.0444] },
+    addressLine1: '123 Tahrir Square, Downtown',
+  },
+  {
+    regionCode: 'africa',
+    countryIso2: 'EG',
+    countryRegion: 'Alexandria Governorate',
+    city: 'Alexandria',
+    name: 'Alexandria Ventilation Center',
+    phones: ['+20 3 4567 8901', '+20 3 4567 8902'],
+    location: { lat: 31.2001, lng: 29.9187 },
+    geo: { type: 'Point', coordinates: [29.9187, 31.2001] },
+    addressLine1: '45 Corniche Road',
+  },
+
+  // Kenya (KE)
+  {
+    regionCode: 'africa',
+    countryIso2: 'KE',
+    countryRegion: 'Nairobi County',
+    city: 'Nairobi',
+    name: 'Nairobi Air Systems',
+    phones: ['+254 20 234 5678'],
+    location: { lat: -1.2921, lng: 36.8219 },
+    geo: { type: 'Point', coordinates: [36.8219, -1.2921] },
+    addressLine1: 'Westlands Business Park',
+  },
+  {
+    regionCode: 'africa',
+    countryIso2: 'KE',
+    countryRegion: 'Mombasa County',
+    city: 'Mombasa',
+    name: 'Coastal Ventilation Solutions',
+    phones: ['+254 41 234 5678'],
+    location: { lat: -4.0435, lng: 39.6682 },
+    geo: { type: 'Point', coordinates: [39.6682, -4.0435] },
+    addressLine1: 'Nyali Bridge Road',
+  },
+
+  // Nigeria (NG)
+  {
+    regionCode: 'africa',
+    countryIso2: 'NG',
+    countryRegion: 'Lagos State',
+    city: 'Lagos',
+    name: 'Lagos Fan & Cooling Center',
+    phones: ['+234 1 234 5678', '+234 1 234 5679'],
+    location: { lat: 6.5244, lng: 3.3792 },
+    geo: { type: 'Point', coordinates: [3.3792, 6.5244] },
+    addressLine1: 'Victoria Island',
+  },
+  {
+    regionCode: 'africa',
+    countryIso2: 'NG',
+    countryRegion: 'Abuja FCT',
+    city: 'Abuja',
+    name: 'Capital Air Solutions',
+    phones: ['+234 9 876 5432'],
+    location: { lat: 9.0765, lng: 7.3986 },
+    geo: { type: 'Point', coordinates: [7.3986, 9.0765] },
+    addressLine1: 'Wuse Zone 5',
+  },
+  {
+    regionCode: 'africa',
+    countryIso2: 'NG',
+    countryRegion: 'Rivers State',
+    city: 'Port Harcourt',
+    name: 'Port Harcourt Industrial Fans',
+    phones: ['+234 84 234 567'],
+    location: { lat: 4.8156, lng: 7.0498 },
+    geo: { type: 'Point', coordinates: [7.0498, 4.8156] },
+    addressLine1: 'Trans Amadi Industrial Layout',
+  },
+
+  // South Africa (ZA)
+  {
+    regionCode: 'africa',
+    countryIso2: 'ZA',
+    countryRegion: 'Gauteng',
+    city: 'Johannesburg',
+    name: 'Joburg Ventilation Warehouse',
+    phones: ['+27 11 234 5678'],
+    location: { lat: -26.2041, lng: 28.0473 },
+    geo: { type: 'Point', coordinates: [28.0473, -26.2041] },
+    addressLine1: 'Sandton City Mall',
+  },
+  {
+    regionCode: 'africa',
+    countryIso2: 'ZA',
+    countryRegion: 'Western Cape',
+    city: 'Cape Town',
+    name: 'Cape Cooling Systems',
+    phones: ['+27 21 456 7890'],
+    location: { lat: -33.9249, lng: 18.4241 },
+    geo: { type: 'Point', coordinates: [18.4241, -33.9249] },
+    addressLine1: 'V&A Waterfront',
+  },
+
+  // Morocco (MA)
+  {
+    regionCode: 'africa',
+    countryIso2: 'MA',
+    countryRegion: 'Casablanca-Settat',
+    city: 'Casablanca',
+    name: 'Casablanca Air Tech',
+    phones: ['+212 522 234 567'],
+    location: { lat: 33.5731, lng: -7.5898 },
+    geo: { type: 'Point', coordinates: [-7.5898, 33.5731] },
+    addressLine1: 'Boulevard Mohammed V',
+  },
+  {
+    regionCode: 'africa',
+    countryIso2: 'MA',
+    countryRegion: 'Rabat-Salé-Kénitra',
+    city: 'Rabat',
+    name: 'Royal Ventilation Center',
+    phones: ['+212 537 345 678'],
+    location: { lat: 34.0209, lng: -6.8416 },
+    geo: { type: 'Point', coordinates: [-6.8416, 34.0209] },
+    addressLine1: 'Avenue Hassan II',
+  },
+
+  // Tanzania (TZ)
+  {
+    regionCode: 'africa',
+    countryIso2: 'TZ',
+    countryRegion: 'Dar es Salaam',
+    city: 'Dar es Salaam',
+    name: 'Dar Air Solutions',
+    phones: ['+255 22 234 5678'],
+    location: { lat: -6.7924, lng: 39.2083 },
+    geo: { type: 'Point', coordinates: [39.2083, -6.7924] },
+    addressLine1: 'Kariakoo Market Area',
+  },
+  {
+    regionCode: 'africa',
+    countryIso2: 'TZ',
+    countryRegion: 'Arusha',
+    city: 'Arusha',
+    name: 'Arusha Ventilation Store',
+    phones: ['+255 27 234 5678'],
+    location: { lat: -3.3869, lng: 36.6830 },
+    geo: { type: 'Point', coordinates: [36.6830, -3.3869] },
+    addressLine1: 'Sokoine Road',
+  },
+
+  // Ghana (GH)
+  {
+    regionCode: 'africa',
+    countryIso2: 'GH',
+    countryRegion: 'Greater Accra',
+    city: 'Accra',
+    name: 'Accra Fan & Air Center',
+    phones: ['+233 30 234 5678'],
+    location: { lat: 5.6037, lng: -0.1870 },
+    geo: { type: 'Point', coordinates: [-0.1870, 5.6037] },
+    addressLine1: 'Osu Oxford Street',
+  },
+  {
+    regionCode: 'africa',
+    countryIso2: 'GH',
+    countryRegion: 'Ashanti',
+    city: 'Kumasi',
+    name: 'Kumasi Industrial Fans',
+    phones: ['+233 32 345 6789'],
+    location: { lat: 6.6884, lng: -1.6244 },
+    geo: { type: 'Point', coordinates: [-1.6244, 6.6884] },
+    addressLine1: 'Kejetia Market Road',
+  },
+
+  // ========== MIDDLE EAST ==========
+  // United Arab Emirates (AE)
+  {
+    regionCode: 'middle-east',
+    countryIso2: 'AE',
+    countryRegion: 'Dubai',
+    city: 'Dubai',
+    name: 'Dubai Cooling Solutions LLC',
+    phones: ['+971 4 234 5678', '+971 4 234 5679'],
+    location: { lat: 25.2048, lng: 55.2708 },
+    geo: { type: 'Point', coordinates: [55.2708, 25.2048] },
+    addressLine1: 'Al Quoz Industrial Area 3',
+  },
+  {
+    regionCode: 'middle-east',
+    countryIso2: 'AE',
+    countryRegion: 'Abu Dhabi',
+    city: 'Abu Dhabi',
+    name: 'Capital Ventilation Trading',
+    phones: ['+971 2 345 6789'],
+    location: { lat: 24.4539, lng: 54.3773 },
+    geo: { type: 'Point', coordinates: [54.3773, 24.4539] },
+    addressLine1: 'Mussafah Industrial Area',
+  },
+  {
+    regionCode: 'middle-east',
+    countryIso2: 'AE',
+    countryRegion: 'Sharjah',
+    city: 'Sharjah',
+    name: 'Sharjah Air Systems',
+    phones: ['+971 6 567 8901'],
+    location: { lat: 25.3463, lng: 55.4209 },
+    geo: { type: 'Point', coordinates: [55.4209, 25.3463] },
+    addressLine1: 'Industrial Area 10',
+  },
+
+  // Saudi Arabia (SA)
+  {
+    regionCode: 'middle-east',
+    countryIso2: 'SA',
+    countryRegion: 'Makkah',
+    city: 'Jeddah',
+    name: 'Al Dar Trading (Branch Of Haitham Est. For Trading)',
+    phones: ['+966 12648 6405', '+966 12647 3431'],
+    location: { lat: 21.4858, lng: 39.1925 },
+    geo: { type: 'Point', coordinates: [39.1925, 21.4858] },
+    addressLine1: 'King Fahd Road',
+  },
+  {
+    regionCode: 'middle-east',
+    countryIso2: 'SA',
+    countryRegion: 'Riyadh',
+    city: 'Riyadh',
+    name: 'Riyadh Ventilation Center',
+    phones: ['+966 11 456 7890'],
+    location: { lat: 24.7136, lng: 46.6753 },
+    geo: { type: 'Point', coordinates: [46.6753, 24.7136] },
+    addressLine1: 'King Abdullah Road',
+  },
+  {
+    regionCode: 'middle-east',
+    countryIso2: 'SA',
+    countryRegion: 'Eastern Province',
+    city: 'Dammam',
+    name: 'Eastern Air Solutions',
+    phones: ['+966 13 567 8901'],
+    location: { lat: 26.4207, lng: 50.0888 },
+    geo: { type: 'Point', coordinates: [50.0888, 26.4207] },
+    addressLine1: 'Industrial City',
+  },
+
+  // Qatar (QA)
+  {
+    regionCode: 'middle-east',
+    countryIso2: 'QA',
+    countryRegion: 'Doha',
+    city: 'Doha',
+    name: 'Qatar Cooling Center',
+    phones: ['+974 4456 7890'],
+    location: { lat: 25.2867, lng: 51.5310 },
+    geo: { type: 'Point', coordinates: [51.5310, 25.2867] },
+    addressLine1: 'West Bay Area',
+  },
+  {
+    regionCode: 'middle-east',
+    countryIso2: 'QA',
+    countryRegion: 'Al Wakrah',
+    city: 'Al Wakrah',
+    name: 'Al Wakrah Ventilation Store',
+    phones: ['+974 4567 8901'],
+    location: { lat: 25.1716, lng: 51.6038 },
+    geo: { type: 'Point', coordinates: [51.6038, 25.1716] },
+    addressLine1: 'Industrial Area',
+  },
+
+  // Kuwait (KW)
+  {
+    regionCode: 'middle-east',
+    countryIso2: 'KW',
+    countryRegion: 'Al Asimah',
+    city: 'Kuwait City',
+    name: 'Bin Nisf – General Trading & Trading & Cont. Co.',
+    phones: ['+965 2234 5678'],
+    location: { lat: 29.3759, lng: 47.9774 },
+    geo: { type: 'Point', coordinates: [47.9774, 29.3759] },
+    addressLine1: 'Street 17, Block 54, Shuwaikh',
+  },
+  {
+    regionCode: 'middle-east',
+    countryIso2: 'KW',
+    countryRegion: 'Hawalli',
+    city: 'Hawalli',
+    name: 'Hawalli Air Solutions',
+    phones: ['+965 2567 8901'],
+    location: { lat: 29.3328, lng: 48.0285 },
+    geo: { type: 'Point', coordinates: [48.0285, 29.3328] },
+    addressLine1: 'Tunis Street',
+  },
+
+  // Bahrain (BH)
+  {
+    regionCode: 'middle-east',
+    countryIso2: 'BH',
+    countryRegion: 'Capital Governorate',
+    city: 'Manama',
+    name: 'Manama Ventilation Trading',
+    phones: ['+973 1723 4567'],
+    location: { lat: 26.2285, lng: 50.5860 },
+    geo: { type: 'Point', coordinates: [50.5860, 26.2285] },
+    addressLine1: 'Diplomatic Area',
+  },
+  {
+    regionCode: 'middle-east',
+    countryIso2: 'BH',
+    countryRegion: 'Muharraq Governorate',
+    city: 'Muharraq',
+    name: 'Muharraq Air Systems',
+    phones: ['+973 1745 6789'],
+    location: { lat: 26.2572, lng: 50.6119 },
+    geo: { type: 'Point', coordinates: [50.6119, 26.2572] },
+    addressLine1: 'Sheikh Hamad Causeway',
+  },
+
+  // Oman (OM)
+  {
+    regionCode: 'middle-east',
+    countryIso2: 'OM',
+    countryRegion: 'Muscat',
+    city: 'Muscat',
+    name: 'Muscat Cooling Solutions',
+    phones: ['+968 2456 7890'],
+    location: { lat: 23.5880, lng: 58.3829 },
+    geo: { type: 'Point', coordinates: [58.3829, 23.5880] },
+    addressLine1: 'Ruwi High Street',
+  },
+  {
+    regionCode: 'middle-east',
+    countryIso2: 'OM',
+    countryRegion: 'Al Batinah North',
+    city: 'Sohar',
+    name: 'Sohar Industrial Fans',
+    phones: ['+968 2678 9012'],
+    location: { lat: 24.3461, lng: 56.7075 },
+    geo: { type: 'Point', coordinates: [56.7075, 24.3461] },
+    addressLine1: 'Sohar Industrial Estate',
+  },
+
+  // Jordan (JO)
+  {
+    regionCode: 'middle-east',
+    countryIso2: 'JO',
+    countryRegion: 'Amman',
+    city: 'Amman',
+    name: 'Amman Ventilation Center',
+    phones: ['+962 6 567 8901'],
+    location: { lat: 31.9454, lng: 35.9284 },
+    geo: { type: 'Point', coordinates: [35.9284, 31.9454] },
+    addressLine1: 'Sweifieh, Rainbow Street',
+  },
+  {
+    regionCode: 'middle-east',
+    countryIso2: 'JO',
+    countryRegion: 'Irbid',
+    city: 'Irbid',
+    name: 'Northern Air Solutions',
+    phones: ['+962 2 678 9012'],
+    location: { lat: 32.5556, lng: 35.8500 },
+    geo: { type: 'Point', coordinates: [35.8500, 32.5556] },
+    addressLine1: 'University Street',
+  },
+];
+
 // ============================================================================
 // Index Creation
 // ============================================================================
@@ -160,6 +537,30 @@ async function createIndexes(): Promise<void> {
   await db.collection(COLLECTIONS.SUBCATEGORIES).createIndex(
     { categoryCode: 1, sortOrder: 1 },
     { name: 'idx_subcategories_sort_order' }
+  );
+
+  // Create unique index on stores for upsert identity
+  await db.collection(COLLECTIONS.STORES).createIndex(
+    { countryIso2: 1, city: 1, name: 1 },
+    { unique: true, name: 'idx_stores_country_city_name_unique' }
+  );
+
+  // Create index on stores for region/country filtering
+  await db.collection(COLLECTIONS.STORES).createIndex(
+    { regionCode: 1, countryIso2: 1, isActive: 1 },
+    { name: 'idx_stores_region_country_active' }
+  );
+
+  // Create index on stores for city lookup
+  await db.collection(COLLECTIONS.STORES).createIndex(
+    { countryIso2: 1, city: 1 },
+    { name: 'idx_stores_country_city' }
+  );
+
+  // Create 2dsphere index for geospatial queries (nearest sorting)
+  await db.collection(COLLECTIONS.STORES).createIndex(
+    { geo: '2dsphere' },
+    { name: 'idx_stores_geo_2dsphere' }
   );
 
   console.log('[Seed] Indexes created successfully');
@@ -338,6 +739,47 @@ async function seedSubcategories(): Promise<number> {
   return insertedCount;
 }
 
+/**
+ * Seed stores collection with initial data
+ * Uses upsert to ensure idempotency
+ */
+async function seedStores(): Promise<number> {
+  const { db } = await connectToDatabase();
+  const collection = db.collection(COLLECTIONS.STORES);
+
+  let insertedCount = 0;
+  const now = new Date();
+
+  for (const storeData of SEED_STORES) {
+    // Validate the data using Zod (add isActive default)
+    const validatedData = validateCreateStore({
+      ...storeData,
+      isActive: true,
+    });
+
+    // Upsert to ensure idempotency (using compound key: countryIso2 + city + name)
+    const result = await collection.updateOne(
+      { countryIso2: validatedData.countryIso2, city: validatedData.city, name: validatedData.name },
+      {
+        $setOnInsert: {
+          ...validatedData,
+          createdAt: now,
+        },
+        $set: {
+          updatedAt: now,
+        },
+      },
+      { upsert: true }
+    );
+
+    if (result.upsertedCount > 0) {
+      insertedCount++;
+    }
+  }
+
+  return insertedCount;
+}
+
 // ============================================================================
 // Main Seeding Function
 // ============================================================================
@@ -347,6 +789,7 @@ export interface SeedResult {
   countriesSeeded: number;
   categoriesSeeded: number;
   subcategoriesSeeded: number;
+  storesSeeded: number;
   productsSeeded: number;
   indexesCreated: boolean;
   skipped: boolean;
@@ -364,6 +807,7 @@ export async function seedDatabase(force = false): Promise<SeedResult> {
     countriesSeeded: 0,
     categoriesSeeded: 0,
     subcategoriesSeeded: 0,
+    storesSeeded: 0,
     productsSeeded: 0,
     indexesCreated: false,
     skipped: false,
@@ -379,8 +823,9 @@ export async function seedDatabase(force = false): Promise<SeedResult> {
     const countriesNeedSeeding = force || await needsSeeding(COLLECTIONS.COUNTRIES);
     const categoriesNeedSeeding = force || await needsSeeding(COLLECTIONS.CATEGORIES);
     const subcategoriesNeedSeeding = force || await needsSeeding(COLLECTIONS.SUBCATEGORIES);
+    const storesNeedSeeding = force || await needsSeeding(COLLECTIONS.STORES);
 
-    if (!regionsNeedSeeding && !countriesNeedSeeding && !categoriesNeedSeeding && !subcategoriesNeedSeeding) {
+    if (!regionsNeedSeeding && !countriesNeedSeeding && !categoriesNeedSeeding && !subcategoriesNeedSeeding && !storesNeedSeeding) {
       console.log('[Seed] Database already seeded, skipping...');
       result.skipped = true;
     } else {
@@ -406,6 +851,12 @@ export async function seedDatabase(force = false): Promise<SeedResult> {
       if (subcategoriesNeedSeeding) {
         result.subcategoriesSeeded = await seedSubcategories();
         console.log(`[Seed] Seeded ${result.subcategoriesSeeded} subcategories`);
+      }
+
+      // Seed stores if needed (after regions and countries for referential integrity)
+      if (storesNeedSeeding) {
+        result.storesSeeded = await seedStores();
+        console.log(`[Seed] Seeded ${result.storesSeeded} stores`);
       }
     }
 
