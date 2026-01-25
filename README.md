@@ -1,36 +1,101 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# KDK Ventilation Product Selection Tool
+
+A Next.js (App Router) TypeScript application for selecting ventilation products. This single-page application provides a marketing + configurator hybrid experience with a multi-step selector form, engineering calculator modals, category exploration grid, and FAQ section.
+
+## Features
+
+- **Hero Section**: Introduction with quick-access cards to the product selector and category browser
+- **Product Selection Stepper**: 4-step form for selecting ventilation products
+  - Step 1: Region and Country selection
+  - Step 2: Product Category and Subcategory
+  - Step 3: Voltage and Frequency (auto-populated based on country)
+  - Step 4: Air Volume and Static Pressure with calculator modals
+- **Calculator Modals**: Engineering calculators for Air Volume and Static Pressure
+- **Category Tiles**: Grid of product categories for easy browsing
+- **FAQ Accordion**: Common questions with expandable answers
+- **Responsive Design**: Mobile-first approach with breakpoints for tablet and desktop
+
+## Tech Stack
+
+- Next.js 16+ with App Router
+- TypeScript
+- Tailwind CSS 4
+- React 19
 
 ## Getting Started
 
-First, run the development server:
+### Installation
 
 ```bash
+# Install dependencies
+pnpm install
+# or
+npm install
+# or
+yarn install
+```
+
+### Development
+
+```bash
+# Run the development server
+pnpm dev
+# or
 npm run dev
 # or
 yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Build for Production
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+# Build the application
+pnpm build
+# or
+npm run build
 
-## Learn More
+# Start the production server
+pnpm start
+# or
+npm start
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Project Structure
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+├── app/
+│   ├── globals.css      # Global styles and CSS variables
+│   ├── layout.tsx       # Root layout
+│   └── page.tsx         # Home page (main entry point)
+├── components/
+│   ├── Header.tsx                       # Navigation header
+│   ├── Hero.tsx                         # Hero/introduction section
+│   ├── ProductSelectionStepper.tsx      # 4-step product selection form
+│   ├── CategoryTiles.tsx                # Product category grid
+│   ├── FAQAccordion.tsx                 # FAQ section with accordion
+│   ├── Footer.tsx                       # Page footer
+│   ├── Modal.tsx                        # Base modal component with accessibility
+│   ├── ConfirmModal.tsx                 # Confirmation dialog modal
+│   ├── AirVolumeCalculatorModal.tsx     # Air volume calculator
+│   ├── StaticPressureCalculatorModal.tsx # Static pressure calculator
+│   └── ResultsBanner.tsx                # Search results banner
+├── public/                              # Static assets
+└── package.json
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Accessibility Features
 
-## Deploy on Vercel
+- Semantic HTML landmarks (`<header>`, `<nav>`, `<main>`, `<section>`, `<footer>`)
+- All form inputs have associated labels
+- Modals include:
+  - Focus trapping
+  - Escape key to close
+  - `aria-labelledby` and `aria-describedby` attributes
+  - Backdrop click to close
+- Keyboard navigation support
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## License
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This project is for demonstration purposes.
