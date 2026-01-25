@@ -284,6 +284,7 @@ function reducer(state: State, action: Action): State {
         },
         errors: { ...state.errors, airVolume: undefined },
         isDirty: true,
+        searchResult: null,
       };
     case 'APPLY_STATIC_PRESSURE':
       return {
@@ -295,6 +296,7 @@ function reducer(state: State, action: Action): State {
         },
         errors: { ...state.errors, staticPressure: undefined },
         isDirty: true,
+        searchResult: null,
       };
     case 'SET_CATEGORY':
       return {
@@ -306,6 +308,7 @@ function reducer(state: State, action: Action): State {
         },
         isDirty: true,
         errors: { ...state.errors, category: undefined },
+        searchResult: null,
       };
     default:
       return state;
