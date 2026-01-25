@@ -59,6 +59,12 @@ export function useProducts(): UseProductsResult {
   const requestIdRef = useRef(0);
   const abortControllerRef = useRef<AbortController | null>(null);
 
+  useEffect(() => {
+    return () => {
+      abortControllerRef.current?.abort();
+    };
+  }, []);
+
   const fetchProducts = useCallback(async (filters: ProductFilters, reset = true) => {
     let requestId = 0;
     let controller: AbortController | null = null;
@@ -114,6 +120,8 @@ export function useProducts(): UseProductsResult {
         return;
       }
 
+      setError(null);
+
       if (reset) {
         setProducts(data.data);
       } else {
@@ -128,6 +136,15 @@ export function useProducts(): UseProductsResult {
       if (err instanceof DOMException && err.name === 'AbortError') {
         return;
       }
+
+      if (controller?.signal.aborted) {
+        return;
+      }
+
+      if (requestId !== requestIdRef.current) {
+        return;
+      }
+
       const message = err instanceof Error ? err.message : 'Failed to fetch products';
       setError(message);
       console.error('[useProducts] Error:', err);

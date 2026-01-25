@@ -55,10 +55,6 @@ export default function ProductListsPage() {
       .filter(Boolean);
   }, [searchParams]);
   const hasCategoryParam = searchParams.has('categoryCode');
-  const selectedCategories = useMemo(
-    () => (hasCategoryParam ? urlCategoryCodes : []),
-    [hasCategoryParam, urlCategoryCodes]
-  );
 
   // Filter state
   const [filters, setFilters] = useState<FilterState>(() => ({
@@ -116,6 +112,25 @@ export default function ProductListsPage() {
     [searchParams]
   );
 
+  // Sync local selected categories when URL changes (back/forward navigation)
+  useEffect(() => {
+    if (!hasCategoryParam && filters.selectedCategories.length === 0) return;
+
+    const isSameSelection =
+      filters.selectedCategories.length === urlCategoryCodes.length &&
+      filters.selectedCategories.every((code) => urlCategoryCodes.includes(code));
+
+    if (isSameSelection) return;
+    const timer = window.setTimeout(() => {
+      setFilters((prev) => ({
+        ...prev,
+        selectedCategories: urlCategoryCodes,
+      }));
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [hasCategoryParam, urlCategoryCodes, filters.selectedCategories]);
+
   useEffect(() => {
     if (!pendingQueryRef.current) return;
     router.replace(pendingQueryRef.current, { scroll: false });
@@ -130,8 +145,8 @@ export default function ProductListsPage() {
         regionCode: filters.regionCode,
         countryKey: filters.countryKey,
         categoryCode:
-          selectedCategories.length > 0
-            ? selectedCategories.join(',')
+          filters.selectedCategories.length > 0
+            ? filters.selectedCategories.join(',')
             : undefined,
         subcategoryCode:
           filters.selectedSubcategories.length > 0
@@ -145,7 +160,7 @@ export default function ProductListsPage() {
   }, [
     filters.regionCode,
     filters.countryKey,
-    selectedCategories,
+    filters.selectedCategories,
     filters.selectedSubcategories,
     filters.selectedVoltages,
     filters.searchQuery,
@@ -319,7 +334,7 @@ export default function ProductListsPage() {
                 countries={countries}
                 categories={categories}
                 subcategories={subcategories}
-                filters={{ ...filters, selectedCategories }}
+                filters={filters}
                 onFiltersChange={handleFiltersChange}
                 onClearAll={() => setSearchInput('')}
                 regionsLoading={regionsLoading}

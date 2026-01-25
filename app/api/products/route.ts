@@ -119,20 +119,18 @@ export async function GET(
     // Filter by market specs (region and country)
     // Products with matching marketSpecs OR products with empty marketSpecs (universal products)
     if (regionCode || countryKey) {
-      const marketConditions = [];
-
-      // Condition 1: Products with matching marketSpecs
-      const matchingMarketSpec: Record<string, string> = {};
+      const elemMatch: Record<string, unknown> = {};
       if (regionCode) {
-        matchingMarketSpec['marketSpecs.regionCode'] = regionCode;
+        elemMatch.regionCode = regionCode;
       }
       if (countryKey) {
-        matchingMarketSpec['marketSpecs.countryKey'] = countryKey;
+        elemMatch.countryKey = countryKey;
       }
-      marketConditions.push(matchingMarketSpec);
 
-      // Condition 2: Products with empty marketSpecs (universal products available everywhere)
-      marketConditions.push({ marketSpecs: { $size: 0 } });
+      const marketConditions = [
+        { marketSpecs: { $elemMatch: elemMatch } },
+        { marketSpecs: { $size: 0 } },
+      ];
 
       query.$or = marketConditions;
     }
@@ -192,9 +190,15 @@ export async function GET(
       const voltages = splitParamList(voltage);
       if (voltages.length > 0) {
         const voltageOr = voltages.map((v) => ({
-          'marketSpecs.electrical.voltage': {
-            $regex: `^${escapeRegExp(v)}V?$`,
-            $options: 'i',
+          marketSpecs: {
+            $elemMatch: {
+              electrical: {
+                voltage: {
+                  $regex: `^${escapeRegExp(v)}V?$`,
+                  $options: 'i',
+                },
+              },
+            },
           },
         }));
 
