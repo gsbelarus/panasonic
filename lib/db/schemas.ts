@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ObjectId } from 'mongodb';
+import { normalizeMongoDocument } from './normalizeMongoDocument';
 
 // Custom Zod schema for MongoDB ObjectId
 const objectIdSchema = z.union([
@@ -263,31 +264,6 @@ export function validateCreateCategory(data: unknown): CreateCategory {
  */
 export function validateCreateSubcategory(data: unknown): CreateSubcategory {
   return CreateSubcategorySchema.parse(data);
-}
-
-/**
- * Normalize MongoDB document for API response
- * - Converts ObjectId to string
- * - Converts Date objects to ISO strings
- */
-function normalizeMongoDocument(doc: unknown): Record<string, unknown> {
-  if (!doc || typeof doc !== 'object') {
-    throw new Error('Invalid document');
-  }
-
-  const result: Record<string, unknown> = {};
-
-  for (const [key, value] of Object.entries(doc as Record<string, unknown>)) {
-    if (value instanceof ObjectId) {
-      result[key] = value.toHexString();
-    } else if (value instanceof Date) {
-      result[key] = value.toISOString();
-    } else {
-      result[key] = value;
-    }
-  }
-
-  return result;
 }
 
 // ============================================================================

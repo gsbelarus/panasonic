@@ -415,7 +415,8 @@ export async function seedDatabase(force = false): Promise<SeedResult> {
     const productsResult = await bootstrapProducts(
       db,
       COLLECTIONS.PRODUCTS,
-      createProductsIndexes
+      createProductsIndexes,
+      force
     );
     result.productsSeeded = productsResult.inserted;
 

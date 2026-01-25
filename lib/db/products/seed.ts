@@ -1,4 +1,4 @@
-import { Db, AnyBulkWriteOperation } from 'mongodb';
+import { Db, AnyBulkWriteOperation, MongoServerError } from 'mongodb';
 import type { ProductInsert, Product } from './schema';
 import { validateProductInsert } from './schema';
 
@@ -115,7 +115,8 @@ export async function seedProductsCollection(
 export async function bootstrapProducts(
   db: Db,
   collectionName: string,
-  createIndexes: (db: Db, collectionName: string) => Promise<void>
+  createIndexes: (db: Db, collectionName: string) => Promise<void>,
+  force = false
 ): Promise<{
   indexesCreated: boolean;
   seeded: boolean;
@@ -130,7 +131,7 @@ export async function bootstrapProducts(
     console.log(`[Products] Collection '${collectionName}' created`);
   } catch (error: unknown) {
     // Collection already exists - this is fine
-    if (error instanceof Error && 'codeName' in error && error.codeName === 'NamespaceExists') {
+    if (error instanceof MongoServerError && error.code === 48) {
       console.log(`[Products] Collection '${collectionName}' already exists`);
     } else {
       throw error;
@@ -141,7 +142,7 @@ export async function bootstrapProducts(
   await createIndexes(db, collectionName);
 
   // Check if seeding is needed
-  const needsSeeding = await needsProductsSeeding(db, collectionName);
+  const needsSeeding = force || await needsProductsSeeding(db, collectionName);
 
   if (!needsSeeding) {
     console.log('[Products] Collection already has data, skipping seed');
