@@ -416,7 +416,13 @@ export async function seedDatabase(force = false): Promise<SeedResult> {
       db,
       COLLECTIONS.PRODUCTS,
       createProductsIndexes,
-      force
+      force,
+      {
+        categories: COLLECTIONS.CATEGORIES,
+        subcategories: COLLECTIONS.SUBCATEGORIES,
+        regions: COLLECTIONS.REGIONS,
+        countries: COLLECTIONS.COUNTRIES,
+      }
     );
     result.productsSeeded = productsResult.inserted;
 
