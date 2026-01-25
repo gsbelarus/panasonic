@@ -1,50 +1,14 @@
 'use client';
 
-import { useReducer, useEffect, useCallback } from 'react';
+import { useReducer, useEffect, useCallback, useMemo } from 'react';
 import ConfirmModal from './ConfirmModal';
 import AirVolumeCalculatorModal from './AirVolumeCalculatorModal';
 import StaticPressureCalculatorModal from './StaticPressureCalculatorModal';
 import ResultsBanner from './ResultsBanner';
+import { useRegions, useCountriesByRegion } from '@/hooks/useRegionsAndCountries';
+import type { CountryResponse } from '@/lib/db/schemas';
 
-// Mock data
-const regionCountries: Record<string, string[]> = {
-  Africa: [
-    'Egypt',
-    'Kenya',
-    'Nigeria',
-    'South Africa',
-    'Morocco',
-    'Tanzania',
-    'Ghana',
-  ],
-  'Middle East': [
-    'United Arab Emirates',
-    'Saudi Arabia',
-    'Qatar',
-    'Kuwait',
-    'Bahrain',
-    'Oman',
-    'Jordan',
-  ],
-};
-
-const countryDefaults: Record<string, { voltage: string; frequency: string }> = {
-  Egypt: { voltage: '220V', frequency: '50Hz' },
-  Kenya: { voltage: '240V', frequency: '50Hz' },
-  Nigeria: { voltage: '230V', frequency: '50Hz' },
-  'South Africa': { voltage: '230V', frequency: '50Hz' },
-  Morocco: { voltage: '220V', frequency: '50Hz' },
-  Tanzania: { voltage: '230V', frequency: '50Hz' },
-  Ghana: { voltage: '230V', frequency: '50Hz' },
-  'United Arab Emirates': { voltage: '220V', frequency: '50Hz' },
-  'Saudi Arabia': { voltage: '220V', frequency: '60Hz' },
-  Qatar: { voltage: '240V', frequency: '50Hz' },
-  Kuwait: { voltage: '240V', frequency: '50Hz' },
-  Bahrain: { voltage: '230V', frequency: '50Hz' },
-  Oman: { voltage: '240V', frequency: '50Hz' },
-  Jordan: { voltage: '230V', frequency: '50Hz' },
-};
-
+// Categories mock data (to be moved to DB later)
 const categories = [
   'Cabinet Fan',
   'Ceiling Mount',
@@ -190,7 +154,9 @@ type Action =
   | { type: 'SET_DIRTY'; value: boolean }
   | { type: 'APPLY_AIR_VOLUME'; value: number; unit: string }
   | { type: 'APPLY_STATIC_PRESSURE'; value: number; unit: string }
-  | { type: 'SET_CATEGORY'; category: string };
+  | { type: 'SET_CATEGORY'; category: string }
+  | { type: 'SET_COUNTRY_WITH_DEFAULTS'; country: string; voltage: string; frequency: string }
+  | { type: 'SET_REGION'; regionCode: string };
 
 const initialState: State = {
   form: {
@@ -227,13 +193,7 @@ function reducer(state: State, action: Action): State {
         newForm.voltage = '';
         newForm.frequency = '';
       }
-      if (action.field === 'country') {
-        const defaults = countryDefaults[action.value];
-        if (defaults) {
-          newForm.voltage = defaults.voltage;
-          newForm.frequency = defaults.frequency;
-        }
-      }
+      // Note: country defaults are now handled in the component via SET_COUNTRY_WITH_DEFAULTS
       if (action.field === 'category') {
         newForm.subcategory = '';
       }
@@ -310,6 +270,33 @@ function reducer(state: State, action: Action): State {
         errors: { ...state.errors, category: undefined },
         searchResult: null,
       };
+    case 'SET_COUNTRY_WITH_DEFAULTS':
+      return {
+        ...state,
+        form: {
+          ...state.form,
+          country: action.country,
+          voltage: action.voltage,
+          frequency: action.frequency,
+        },
+        isDirty: true,
+        errors: { ...state.errors, country: undefined },
+        searchResult: null,
+      };
+    case 'SET_REGION':
+      return {
+        ...state,
+        form: {
+          ...state.form,
+          region: action.regionCode,
+          country: '',
+          voltage: '',
+          frequency: '',
+        },
+        isDirty: true,
+        errors: { ...state.errors, region: undefined },
+        searchResult: null,
+      };
     default:
       return state;
   }
@@ -325,6 +312,26 @@ export default function ProductSelectionStepper({
   onCategoryPreselected,
 }: ProductSelectionStepperProps) {
   const [state, dispatch] = useReducer(reducer, initialState);
+
+  // Fetch regions and countries from API
+  const { regions, loading: regionsLoading, error: regionsError } = useRegions();
+
+  // Get the selected region's code for fetching countries
+  const selectedRegionCode = useMemo(() => {
+    const region = regions.find((r) => r.name === state.form.region);
+    return region?.code || null;
+  }, [regions, state.form.region]);
+
+  const { countries: countriesData, loading: countriesLoading } = useCountriesByRegion(selectedRegionCode);
+
+  // Build a lookup map for country defaults (voltage/frequency)
+  const countryDefaultsMap = useMemo(() => {
+    const map: Record<string, CountryResponse> = {};
+    countriesData.forEach((country) => {
+      map[country.name] = country;
+    });
+    return map;
+  }, [countriesData]);
 
   // Handle preselected category from CategoryTiles
   useEffect(() => {
@@ -407,6 +414,26 @@ export default function ProductSelectionStepper({
     dispatch({ type: 'SET_FIELD', field, value });
   };
 
+  // Handle region change - store the region name but clear country and defaults
+  const handleRegionChange = (regionName: string) => {
+    dispatch({ type: 'SET_FIELD', field: 'region', value: regionName });
+  };
+
+  // Handle country change with voltage/frequency defaults from DB
+  const handleCountryChange = (countryName: string) => {
+    const countryData = countryDefaultsMap[countryName];
+    if (countryData) {
+      dispatch({
+        type: 'SET_COUNTRY_WITH_DEFAULTS',
+        country: countryName,
+        voltage: countryData.voltage,
+        frequency: countryData.frequency,
+      });
+    } else {
+      dispatch({ type: 'SET_FIELD', field: 'country', value: countryName });
+    }
+  };
+
   const validateAll = (): boolean => {
     const errors: FormErrors = {};
     const fieldsToValidate: (keyof FormState)[] = [
@@ -464,7 +491,8 @@ export default function ProductSelectionStepper({
     dispatch({ type: 'APPLY_STATIC_PRESSURE', value, unit });
   };
 
-  const countries = state.form.region ? regionCountries[state.form.region] || [] : [];
+  // Countries list derived from API data
+  const countryNames = countriesData.map((c) => c.name);
   const subcategories = state.form.category
     ? categorySubcategories[state.form.category] || []
     : [];
@@ -499,23 +527,29 @@ export default function ProductSelectionStepper({
                   <select
                     id="region"
                     value={state.form.region}
-                    onChange={(e) => handleChange('region', e.target.value)}
+                    onChange={(e) => handleRegionChange(e.target.value)}
                     onBlur={() => handleBlur('region')}
-                    className={`w-full h-11 px-3 border rounded-[10px] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] ${state.errors.region
+                    disabled={regionsLoading}
+                    className={`w-full h-11 px-3 border rounded-[10px] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] disabled:bg-gray-100 disabled:cursor-not-allowed ${state.errors.region
                       ? 'border-[var(--error)]'
                       : 'border-[var(--border)] focus:border-[var(--border-focus)]'
                       }`}
                   >
-                    <option value="">Select region</option>
-                    {Object.keys(regionCountries).map((region) => (
-                      <option key={region} value={region}>
-                        {region}
+                    <option value="">{regionsLoading ? 'Loading...' : 'Select region'}</option>
+                    {regions.map((region) => (
+                      <option key={region._id} value={region.name}>
+                        {region.name}
                       </option>
                     ))}
                   </select>
                   {state.errors.region && (
                     <p className="mt-1 text-xs text-[var(--error)]">
                       {state.errors.region}
+                    </p>
+                  )}
+                  {regionsError && (
+                    <p className="mt-1 text-xs text-[var(--error)]">
+                      Failed to load regions
                     </p>
                   )}
                 </div>
@@ -529,18 +563,18 @@ export default function ProductSelectionStepper({
                   <select
                     id="country"
                     value={state.form.country}
-                    onChange={(e) => handleChange('country', e.target.value)}
+                    onChange={(e) => handleCountryChange(e.target.value)}
                     onBlur={() => handleBlur('country')}
-                    disabled={!state.form.region}
+                    disabled={!state.form.region || countriesLoading}
                     className={`w-full h-11 px-3 border rounded-[10px] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] disabled:bg-gray-100 disabled:cursor-not-allowed ${state.errors.country
                       ? 'border-[var(--error)]'
                       : 'border-[var(--border)] focus:border-[var(--border-focus)]'
                       }`}
                   >
-                    <option value="">Select country</option>
-                    {countries.map((country) => (
-                      <option key={country} value={country}>
-                        {country}
+                    <option value="">{countriesLoading ? 'Loading...' : 'Select country'}</option>
+                    {countryNames.map((countryName) => (
+                      <option key={countryName} value={countryName}>
+                        {countryName}
                       </option>
                     ))}
                   </select>
