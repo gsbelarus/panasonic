@@ -229,15 +229,17 @@ export async function seedDatabase(force = false): Promise<SeedResult> {
  * Initialize the database on application startup.
  * This ensures indexes and seed data are in place.
  */
-export async function initializeDatabase(): Promise<void> {
+export async function initializeDatabase(): Promise<boolean> {
   console.log('[DB] Initializing database...');
 
   try {
     await seedDatabase();
     console.log('[DB] Database initialization complete');
+    return true;
   } catch (error) {
     console.error('[DB] Database initialization failed:', error);
     // Don't throw - allow the app to start even if seeding fails
     // The API routes will handle connection errors appropriately
+    return false;
   }
 }

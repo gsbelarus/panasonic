@@ -12,8 +12,8 @@ let initialized = false;
 
 async function ensureInitialized() {
   if (!initialized) {
-    await initializeDatabase();
-    initialized = true;
+    const success = await initializeDatabase();
+    initialized = success;
   }
 }
 

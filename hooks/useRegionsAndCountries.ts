@@ -114,15 +114,22 @@ export function useCountriesByRegion(regionCode: string | null): UseCountriesByR
   useEffect(() => {
     if (!regionCode) {
       setCountries([]);
+      setLoading(false);
+      setError(null);
       return;
     }
+
+    const controller = new AbortController();
 
     const fetchCountries = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        const response = await fetch(`/api/countries?regionCode=${encodeURIComponent(regionCode)}`);
+        const response = await fetch(
+          `/api/countries?regionCode=${encodeURIComponent(regionCode)}`,
+          { signal: controller.signal }
+        );
         const data = await response.json();
 
         if (!data.success) {
@@ -131,15 +138,24 @@ export function useCountriesByRegion(regionCode: string | null): UseCountriesByR
 
         setCountries(data.data);
       } catch (err) {
+        if (err instanceof DOMException && err.name === 'AbortError') {
+          return;
+        }
+
         const message = err instanceof Error ? err.message : 'Failed to fetch countries';
         setError(message);
         console.error('[useCountriesByRegion] Error:', err);
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchCountries();
+    return () => {
+      controller.abort();
+    };
   }, [regionCode]);
 
   return { countries, loading, error };
