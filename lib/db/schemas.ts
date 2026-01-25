@@ -1,14 +1,6 @@
 import { z } from 'zod';
-import { ObjectId } from 'mongodb';
 import { normalizeMongoDocument } from './normalizeMongoDocument';
-
-// Custom Zod schema for MongoDB ObjectId
-const objectIdSchema = z.union([
-  z.string().refine((val) => ObjectId.isValid(val), {
-    message: 'Invalid ObjectId string',
-  }),
-  z.instanceof(ObjectId),
-]);
+import { objectIdSchema } from './objectIdSchema';
 
 // ============================================================================
 // Region Schema

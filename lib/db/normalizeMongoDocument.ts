@@ -14,20 +14,28 @@ export function normalizeMongoDocument(doc: unknown): Record<string, unknown> {
   const result: Record<string, unknown> = {};
 
   for (const [key, value] of Object.entries(doc as Record<string, unknown>)) {
-    if (value instanceof ObjectId) {
-      result[key] = value.toHexString();
-    } else if (value instanceof Date) {
-      result[key] = value.toISOString();
-    } else if (Array.isArray(value)) {
-      result[key] = value.map((item) =>
-        item && typeof item === 'object' ? normalizeMongoDocument(item) : item
-      );
-    } else if (value && typeof value === 'object') {
-      result[key] = normalizeMongoDocument(value);
-    } else {
-      result[key] = value;
-    }
+    result[key] = normalizeMongoValue(value);
   }
 
   return result;
+}
+
+function normalizeMongoValue(value: unknown): unknown {
+  if (value instanceof ObjectId) {
+    return value.toHexString();
+  }
+
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => normalizeMongoValue(item));
+  }
+
+  if (value && typeof value === 'object') {
+    return normalizeMongoDocument(value);
+  }
+
+  return value;
 }
