@@ -88,6 +88,7 @@ export default function ProductListsPage() {
     pagination,
     fetchProducts,
     loadMore,
+    resetProducts,
   } = useProducts();
 
   const handleFiltersChange = useCallback(
@@ -156,6 +157,8 @@ export default function ProductListsPage() {
         q: filters.searchQuery || undefined,
       };
       fetchProducts(productFilters);
+    } else {
+      resetProducts();
     }
   }, [
     filters.regionCode,
@@ -165,6 +168,7 @@ export default function ProductListsPage() {
     filters.selectedVoltages,
     filters.searchQuery,
     fetchProducts,
+    resetProducts,
   ]);
 
   // Debounced search
@@ -204,6 +208,11 @@ export default function ProductListsPage() {
     }
     setComparisonProducts(newComparisonProducts);
   };
+
+  const comparisonIds = useMemo(() => Array.from(comparisonProducts), [comparisonProducts]);
+  const comparisonHref = comparisonIds.length > 0
+    ? `/comparison?ids=${encodeURIComponent(comparisonIds.join(','))}`
+    : '/comparison';
 
   // Handle report generation (stubbed)
   const handleGenerateReport = (type: 'jpeg' | 'pdf', options: string[]) => {
@@ -501,7 +510,7 @@ export default function ProductListsPage() {
             </span>
             <div className="flex items-center gap-4">
               <a
-                href="/comparison"
+                href={comparisonHref}
                 className="px-6 py-2 bg-[var(--primary)] text-white text-sm font-medium rounded-lg hover:bg-[var(--primary-hover)] transition-colors"
               >
                 Compare

@@ -192,11 +192,9 @@ export async function GET(
         const voltageOr = voltages.map((v) => ({
           marketSpecs: {
             $elemMatch: {
-              electrical: {
-                voltage: {
-                  $regex: `^${escapeRegExp(v)}V?$`,
-                  $options: 'i',
-                },
+              'electrical.voltage': {
+                $regex: `^${escapeRegExp(v)}V?$`,
+                $options: 'i',
               },
             },
           },

@@ -28,6 +28,7 @@ export interface UseProductsResult {
   pagination: ProductsPagination;
   fetchProducts: (filters: ProductFilters, reset?: boolean) => Promise<void>;
   loadMore: () => Promise<void>;
+  resetProducts: () => void;
 }
 
 // ============================================================================
@@ -161,6 +162,24 @@ export function useProducts(): UseProductsResult {
     await fetchProducts(currentFiltersRef.current, false);
   }, [fetchProducts, loading]);
 
+  const resetProducts = useCallback(() => {
+    setProducts([]);
+    setPagination({
+      total: 0,
+      limit: DEFAULT_LIMIT,
+      skip: 0,
+      hasMore: false,
+    });
+    paginationRef.current = {
+      total: 0,
+      limit: DEFAULT_LIMIT,
+      skip: 0,
+      hasMore: false,
+    };
+    setError(null);
+    setLoading(false);
+  }, []);
+
   return {
     products,
     loading,
@@ -168,6 +187,7 @@ export function useProducts(): UseProductsResult {
     pagination,
     fetchProducts,
     loadMore,
+    resetProducts,
   };
 }
 
