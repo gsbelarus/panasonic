@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, type Dispatch, type SetStateAction } from 'react';
 import type { RegionResponse, CountryResponse, CategoryResponse, SubcategoryResponse } from '@/lib/db/schemas';
 import {
   FilterGroup,
@@ -34,7 +34,7 @@ interface FiltersProps {
   categories: CategoryResponse[];
   subcategories: SubcategoryResponse[];
   filters: FilterState;
-  onFiltersChange: (filters: FilterState) => void;
+  onFiltersChange: Dispatch<SetStateAction<FilterState>>;
   regionsLoading?: boolean;
   countriesLoading?: boolean;
   categoriesLoading?: boolean;
@@ -83,6 +83,7 @@ export function FiltersPanel({
   onMobileClose,
 }: FiltersProps) {
   const panelRef = useRef<HTMLDivElement>(null);
+  const isLocationSelected = Boolean(filters.regionCode && filters.countryKey);
 
   // Calculate applied filters count
   const appliedFiltersCount =
@@ -288,27 +289,35 @@ export function FiltersPanel({
 
       {/* Category & Subcategory Filter */}
       <FilterGroup title="Category & Subcategory" defaultOpen>
-        {categoriesLoading ? (
-          <div className="py-4 text-sm text-[var(--muted)]">Loading categories...</div>
-        ) : (
-          <CategoryTree
-            categories={categories}
-            subcategories={subcategories}
-            selectedCategories={filters.selectedCategories}
-            selectedSubcategories={filters.selectedSubcategories}
-            onCategoryChange={(codes) =>
-              onFiltersChange({ ...filters, selectedCategories: codes })
-            }
-            onSubcategoryChange={(codes) =>
-              onFiltersChange({ ...filters, selectedSubcategories: codes })
-            }
-          />
-        )}
+        <div
+          className={isLocationSelected ? '' : 'opacity-50 pointer-events-none'}
+          aria-disabled={!isLocationSelected}
+        >
+          {categoriesLoading ? (
+            <div className="py-4 text-sm text-[var(--muted)]">Loading categories...</div>
+          ) : (
+            <CategoryTree
+              categories={categories}
+              subcategories={subcategories}
+              selectedCategories={filters.selectedCategories}
+              selectedSubcategories={filters.selectedSubcategories}
+              onCategoryChange={(codes) =>
+                onFiltersChange((prev) => ({ ...prev, selectedCategories: codes }))
+              }
+              onSubcategoryChange={(codes) =>
+                onFiltersChange((prev) => ({ ...prev, selectedSubcategories: codes }))
+              }
+            />
+          )}
+        </div>
       </FilterGroup>
 
       {/* Voltage Filter */}
       <FilterGroup title="Voltage" defaultOpen>
-        <div className="space-y-1">
+        <div
+          className={isLocationSelected ? 'space-y-1' : 'space-y-1 opacity-50 pointer-events-none'}
+          aria-disabled={!isLocationSelected}
+        >
           {VOLTAGE_OPTIONS.map((voltage) => (
             <Checkbox
               key={voltage}
@@ -327,40 +336,50 @@ export function FiltersPanel({
 
       {/* Air Volume Filter */}
       <FilterGroup title="Air Volume" defaultOpen>
-        <CustomSelect
-          label="Size Unit"
-          options={AIR_VOLUME_UNITS}
-          value={filters.airVolumeUnit}
-          onChange={(value) => onFiltersChange({ ...filters, airVolumeUnit: value })}
-          placeholder="Select Unit"
-        />
-        <RangeSlider
-          label="Value"
-          min={0}
-          max={10000}
-          value={filters.airVolumeValue}
-          onChange={(value) => onFiltersChange({ ...filters, airVolumeValue: value })}
-          unit={filters.airVolumeUnit || 'CMH'}
-        />
+        <div
+          className={isLocationSelected ? '' : 'opacity-50 pointer-events-none'}
+          aria-disabled={!isLocationSelected}
+        >
+          <CustomSelect
+            label="Size Unit"
+            options={AIR_VOLUME_UNITS}
+            value={filters.airVolumeUnit}
+            onChange={(value) => onFiltersChange({ ...filters, airVolumeUnit: value })}
+            placeholder="Select Unit"
+          />
+          <RangeSlider
+            label="Value"
+            min={0}
+            max={10000}
+            value={filters.airVolumeValue}
+            onChange={(value) => onFiltersChange({ ...filters, airVolumeValue: value })}
+            unit={filters.airVolumeUnit || 'CMH'}
+          />
+        </div>
       </FilterGroup>
 
       {/* Static Pressure Filter */}
       <FilterGroup title="Static Pressure" defaultOpen>
-        <CustomSelect
-          label="Size Unit"
-          options={STATIC_PRESSURE_UNITS}
-          value={filters.staticPressureUnit}
-          onChange={(value) => onFiltersChange({ ...filters, staticPressureUnit: value })}
-          placeholder="Select Unit"
-        />
-        <RangeSlider
-          label="Value"
-          min={0}
-          max={1000}
-          value={filters.staticPressureValue}
-          onChange={(value) => onFiltersChange({ ...filters, staticPressureValue: value })}
-          unit={filters.staticPressureUnit || 'Pa'}
-        />
+        <div
+          className={isLocationSelected ? '' : 'opacity-50 pointer-events-none'}
+          aria-disabled={!isLocationSelected}
+        >
+          <CustomSelect
+            label="Size Unit"
+            options={STATIC_PRESSURE_UNITS}
+            value={filters.staticPressureUnit}
+            onChange={(value) => onFiltersChange({ ...filters, staticPressureUnit: value })}
+            placeholder="Select Unit"
+          />
+          <RangeSlider
+            label="Value"
+            min={0}
+            max={1000}
+            value={filters.staticPressureValue}
+            onChange={(value) => onFiltersChange({ ...filters, staticPressureValue: value })}
+            unit={filters.staticPressureUnit || 'Pa'}
+          />
+        </div>
       </FilterGroup>
     </div>
   );

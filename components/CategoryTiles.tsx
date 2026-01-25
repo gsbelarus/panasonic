@@ -3,7 +3,7 @@
 import { useCategories } from '@/hooks/useCategoriesAndSubcategories';
 
 interface CategoryTilesProps {
-  onCategorySelect: (category: string) => void;
+  onCategorySelect: (categoryCode: string) => void;
 }
 
 const defaultCategoryIcon =
@@ -12,23 +12,8 @@ const defaultCategoryIcon =
 export default function CategoryTiles({ onCategorySelect }: CategoryTilesProps) {
   const { categories, loading, error } = useCategories();
 
-  const handleClick = (category: string) => {
-    // Scroll to step 2 and select the category
-    const stepElement = document.getElementById('step-category');
-    if (stepElement) {
-      stepElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      // Use scrollend event when available, with a conservative timeout fallback
-      let fallbackTimeout: number | undefined = undefined;
-      const handleScrollEnd = () => {
-        window.clearTimeout(fallbackTimeout);
-        window.removeEventListener('scrollend', handleScrollEnd);
-        onCategorySelect(category);
-      };
-      window.addEventListener('scrollend', handleScrollEnd, { once: true });
-      fallbackTimeout = window.setTimeout(handleScrollEnd, 600);
-    } else {
-      onCategorySelect(category);
-    }
+  const handleClick = (categoryCode: string) => {
+    onCategorySelect(categoryCode);
   };
 
   return (
@@ -57,7 +42,7 @@ export default function CategoryTiles({ onCategorySelect }: CategoryTilesProps) 
             <button
               key={category._id}
               type="button"
-              onClick={() => handleClick(category.name)}
+              onClick={() => handleClick(category.code)}
               className="group bg-white border border-[var(--border)] rounded-xl p-5 text-left transition-all duration-200 hover:shadow-lg hover:border-[var(--primary)] hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:ring-offset-2"
             >
               <div className="flex items-center gap-4">

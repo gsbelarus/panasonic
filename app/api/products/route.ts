@@ -50,6 +50,11 @@ export interface ProductsApiResponse {
   };
 }
 
+type MongoQuery = Record<string, unknown> & {
+  $and?: Array<Record<string, unknown>>;
+  $or?: Array<Record<string, unknown>>;
+};
+
 // ============================================================================
 // GET /api/products
 // ============================================================================
@@ -107,8 +112,7 @@ export async function GET(
     const validSubcategoryCodes = await getValidSubcategoryCodes();
 
     // Build MongoDB query
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const query: Record<string, any> = {
+    const query: MongoQuery = {
       isActive: true,
     };
 
@@ -135,9 +139,10 @@ export async function GET(
 
     // Filter by category (only if valid)
     if (categoryCode) {
-      if (validCategoryCodes.has(categoryCode)) {
-        query.categoryCode = categoryCode;
-      } else {
+      const categoryCodes = splitParamList(categoryCode);
+      const hasInvalidCategory = categoryCodes.some((code) => !validCategoryCodes.has(code));
+
+      if (hasInvalidCategory) {
         // Invalid category code - return empty results
         return NextResponse.json({
           success: true,
@@ -150,13 +155,20 @@ export async function GET(
           },
         });
       }
+
+      if (categoryCodes.length > 0) {
+        query.categoryCode = { $in: categoryCodes };
+      }
     }
 
     // Filter by subcategory (only if valid)
     if (subcategoryCode) {
-      if (validSubcategoryCodes.has(subcategoryCode)) {
-        query.subcategoryCode = subcategoryCode;
-      } else {
+      const subcategoryCodes = splitParamList(subcategoryCode);
+      const hasInvalidSubcategory = subcategoryCodes.some(
+        (code) => !validSubcategoryCodes.has(code)
+      );
+
+      if (hasInvalidSubcategory) {
         // Invalid subcategory code - return empty results
         return NextResponse.json({
           success: true,
@@ -169,36 +181,54 @@ export async function GET(
           },
         });
       }
+
+      if (subcategoryCodes.length > 0) {
+        query.subcategoryCode = { $in: subcategoryCodes };
+      }
     }
 
     // Filter by voltage (from marketSpecs.electrical.voltage)
     if (voltage) {
-      const voltages = voltage.split(',').map((v) => v.trim());
-      // Create regex patterns to match voltage values like "220V", "230V", etc.
-      const voltagePatterns = voltages.map((v) => new RegExp(`^${v}V?$`, 'i'));
-      query['marketSpecs.electrical.voltage'] = { $in: voltagePatterns };
+      const voltages = splitParamList(voltage);
+      if (voltages.length > 0) {
+        const voltageOr = voltages.map((v) => ({
+          'marketSpecs.electrical.voltage': {
+            $regex: `^${escapeRegExp(v)}V?$`,
+            $options: 'i',
+          },
+        }));
+
+        addAndCondition(query, { $or: voltageOr });
+      }
     }
 
     // Search by model code or category name
     if (q && q.trim()) {
-      const searchRegex = new RegExp(q.trim(), 'i');
-      const searchCondition = [{ modelCode: searchRegex }, { categoryCode: searchRegex }];
+      const safeQuery = escapeRegExp(q.trim());
+      const searchCondition: Array<Record<string, unknown>> = [
+        { modelCode: { $regex: safeQuery, $options: 'i' } },
+      ];
 
-      // If we already have $or from market spec filtering, we need to use $and
-      if (query.$or) {
-        query.$and = [
-          { $or: query.$or },
-          { $or: searchCondition },
-        ];
-        delete query.$or;
-      } else {
-        query.$or = searchCondition;
+      const categoriesCollection = await getCategoriesCollection();
+      const matchingCategories = await categoriesCollection
+        .find({ name: { $regex: safeQuery, $options: 'i' } }, { projection: { code: 1 } })
+        .toArray();
+
+      const matchingCategoryCodes = matchingCategories.map((category) => category.code);
+      if (matchingCategoryCodes.length > 0) {
+        searchCondition.push({ categoryCode: { $in: matchingCategoryCodes } });
       }
+
+      addAndCondition(query, { $or: searchCondition });
     }
 
     // Exclude products with invalid category/subcategory codes
-    query.categoryCode = query.categoryCode || { $in: Array.from(validCategoryCodes) };
-    query.subcategoryCode = query.subcategoryCode || { $in: Array.from(validSubcategoryCodes) };
+    if (!categoryCode && !query.categoryCode) {
+      query.categoryCode = { $in: Array.from(validCategoryCodes) };
+    }
+    if (!subcategoryCode && !query.subcategoryCode) {
+      query.subcategoryCode = { $in: Array.from(validSubcategoryCodes) };
+    }
 
     const collection = await getProductsCollection();
 
@@ -255,4 +285,30 @@ async function getValidSubcategoryCodes(): Promise<Set<string>> {
   const collection = await getSubcategoriesCollection();
   const subcategories = await collection.find({}, { projection: { code: 1 } }).toArray();
   return new Set(subcategories.map((s) => s.code));
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function splitParamList(value: string): string[] {
+  return value
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function addAndCondition(query: MongoQuery, condition: MongoQuery): void {
+  if (query.$and) {
+    query.$and.push(condition);
+    return;
+  }
+
+  if (query.$or) {
+    query.$and = [{ $or: query.$or }, condition];
+    delete query.$or;
+    return;
+  }
+
+  Object.assign(query, condition);
 }

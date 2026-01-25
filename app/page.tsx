@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Hero from '@/components/Hero';
 import ProductSelectionStepper from '@/components/ProductSelectionStepper';
@@ -9,8 +10,8 @@ import FAQAccordion, { ContactModal } from '@/components/FAQAccordion';
 import Footer from '@/components/Footer';
 
 export default function Home() {
-  const [preselectedCategory, setPreselectedCategory] = useState<string | undefined>(undefined);
   const [contactModalOpen, setContactModalOpen] = useState(false);
+  const router = useRouter();
 
   const handleProductSelectionClick = () => {
     const element = document.getElementById('product-selection');
@@ -26,14 +27,12 @@ export default function Home() {
     }
   };
 
-  const handleCategorySelect = useCallback((category: string) => {
-    setPreselectedCategory(category);
-  }, []);
-
-  const handleCategoryPreselected = useCallback(() => {
-    // Clear the preselected category after it's been applied
-    setPreselectedCategory(undefined);
-  }, []);
+  const handleCategorySelect = useCallback(
+    (categoryCode: string) => {
+      router.push(`/product-lists?categoryCode=${encodeURIComponent(categoryCode)}`);
+    },
+    [router]
+  );
 
   const handleContactClick = () => {
     setContactModalOpen(true);
@@ -49,10 +48,7 @@ export default function Home() {
           onExploreCategoriesClick={handleExploreCategoriesClick}
         />
 
-        <ProductSelectionStepper
-          preselectedCategory={preselectedCategory}
-          onCategoryPreselected={handleCategoryPreselected}
-        />
+        <ProductSelectionStepper />
 
         <CategoryTiles onCategorySelect={handleCategorySelect} />
 

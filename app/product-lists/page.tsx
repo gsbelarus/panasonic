@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { FiltersPanel, type FilterState } from '@/components/filters';
@@ -10,6 +10,7 @@ import { useRegions, useCountriesByRegion } from '@/hooks/useRegionsAndCountries
 import { useCategories, useSubcategories } from '@/hooks/useCategoriesAndSubcategories';
 import { useProducts, type ProductFilters } from '@/hooks/useProducts';
 import type { ProductResponse } from '@/lib/db/products/schema';
+import { useSearchParams } from 'next/navigation';
 
 // ============================================================================
 // View Mode Type
@@ -42,8 +43,22 @@ export default function ProductListsPage() {
   // View mode state
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
 
+  const searchParams = useSearchParams();
+  const initialCategoryCodes = useMemo(() => {
+    const categoryParam = searchParams.get('categoryCode');
+    if (!categoryParam) return [] as string[];
+
+    return categoryParam
+      .split(',')
+      .map((value) => value.trim())
+      .filter(Boolean);
+  }, [searchParams]);
+
   // Filter state
-  const [filters, setFilters] = useState<FilterState>(initialFilterState);
+  const [filters, setFilters] = useState<FilterState>(() => ({
+    ...initialFilterState,
+    selectedCategories: initialCategoryCodes,
+  }));
 
   // Mobile filters panel state
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
@@ -63,39 +78,33 @@ export default function ProductListsPage() {
   const { countries, loading: countriesLoading } = useCountriesByRegion(filters.regionCode);
   const { categories, loading: categoriesLoading } = useCategories();
   const { subcategories } = useSubcategories();
-  const { products, loading: productsLoading, pagination, fetchProducts, loadMore } = useProducts();
-
-  // Build product filters from filter state
-  const buildProductFilters = useCallback((): ProductFilters => {
-    const productFilters: ProductFilters = {};
-
-    if (filters.regionCode) {
-      productFilters.regionCode = filters.regionCode;
-    }
-    if (filters.countryKey) {
-      productFilters.countryKey = filters.countryKey;
-    }
-    if (filters.selectedCategories.length === 1) {
-      productFilters.categoryCode = filters.selectedCategories[0];
-    }
-    if (filters.selectedSubcategories.length === 1) {
-      productFilters.subcategoryCode = filters.selectedSubcategories[0];
-    }
-    if (filters.selectedVoltages.length > 0) {
-      productFilters.voltage = filters.selectedVoltages;
-    }
-    if (filters.searchQuery) {
-      productFilters.q = filters.searchQuery;
-    }
-
-    return productFilters;
-  }, [filters]);
+  const {
+    products,
+    loading: productsLoading,
+    error: productsError,
+    pagination,
+    fetchProducts,
+    loadMore,
+  } = useProducts();
 
   // Fetch products when filters change
   useEffect(() => {
     // Only fetch if region and country are selected
     if (filters.regionCode && filters.countryKey) {
-      const productFilters = buildProductFilters();
+      const productFilters: ProductFilters = {
+        regionCode: filters.regionCode,
+        countryKey: filters.countryKey,
+        categoryCode:
+          filters.selectedCategories.length > 0
+            ? filters.selectedCategories.join(',')
+            : undefined,
+        subcategoryCode:
+          filters.selectedSubcategories.length > 0
+            ? filters.selectedSubcategories.join(',')
+            : undefined,
+        voltage: filters.selectedVoltages.length > 0 ? filters.selectedVoltages : undefined,
+        q: filters.searchQuery || undefined,
+      };
       fetchProducts(productFilters);
     }
   }, [
@@ -105,9 +114,10 @@ export default function ProductListsPage() {
     filters.selectedSubcategories,
     filters.selectedVoltages,
     filters.searchQuery,
-    buildProductFilters,
     fetchProducts,
   ]);
+
+  // Apply category filter from URL (e.g., /product-lists?categoryCode=wall-mount)
 
   // Debounced search
   useEffect(() => {
@@ -132,7 +142,7 @@ export default function ProductListsPage() {
 
   // Determine if we have no results after filtering
   const showNoResultsState =
-    !showLocationEmptyState && !productsLoading && products.length === 0;
+    !showLocationEmptyState && !productsLoading && !productsError && products.length === 0;
 
   // Handle comparison toggle
   const handleCompareChange = (productId: string, selected: boolean) => {
@@ -214,8 +224,8 @@ export default function ProductListsPage() {
                     type="button"
                     onClick={() => setViewMode('list')}
                     className={`p-2 transition-colors ${viewMode === 'list'
-                        ? 'bg-gray-100 text-[var(--foreground)]'
-                        : 'text-[var(--muted)] hover:text-[var(--foreground)]'
+                      ? 'bg-gray-100 text-[var(--foreground)]'
+                      : 'text-[var(--muted)] hover:text-[var(--foreground)]'
                       }`}
                     title="Show as list"
                   >
@@ -241,8 +251,8 @@ export default function ProductListsPage() {
                     type="button"
                     onClick={() => setViewMode('grid')}
                     className={`p-2 transition-colors ${viewMode === 'grid'
-                        ? 'bg-gray-100 text-[var(--foreground)]'
-                        : 'text-[var(--muted)] hover:text-[var(--foreground)]'
+                      ? 'bg-gray-100 text-[var(--foreground)]'
+                      : 'text-[var(--muted)] hover:text-[var(--foreground)]'
                       }`}
                     title="Show as grid"
                   >
@@ -330,8 +340,51 @@ export default function ProductListsPage() {
                 <ProductsEmptyState showLocationPrompt={false} />
               )}
 
+              {/* Error State */}
+              {productsError && !showLocationEmptyState && (
+                <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 text-red-600">
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M10.29 3.86L1.82 18C1.64 18.3 1.55 18.64 1.55 19C1.55 19.36 1.64 19.7 1.82 20C2 20.3 2.26 20.56 2.57 20.74C2.88 20.92 3.23 21.01 3.59 21H20.53C20.89 21.01 21.24 20.92 21.55 20.74C21.86 20.56 22.12 20.3 22.3 20C22.48 19.7 22.57 19.36 22.57 19C22.57 18.64 22.48 18.3 22.3 18L13.83 3.86C13.65 3.56 13.39 3.32 13.08 3.15C12.77 2.98 12.42 2.89 12.06 2.89C11.7 2.89 11.35 2.98 11.04 3.15C10.73 3.32 10.47 3.56 10.29 3.86Z"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <path
+                          d="M12 9V13"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <path
+                          d="M12 17H12.01"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-red-700">Unable to load products</p>
+                      <p className="text-sm text-red-600">{productsError}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Loading State */}
-              {productsLoading && !showLocationEmptyState && (
+              {productsLoading && !showLocationEmptyState && products.length === 0 && (
                 <div
                   className={
                     viewMode === 'grid'

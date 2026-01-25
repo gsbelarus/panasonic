@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import type { ProductResponse } from '@/lib/db/products/schema';
 
 // ============================================================================
@@ -49,69 +49,75 @@ export function useProducts(): UseProductsResult {
     skip: 0,
     hasMore: false,
   });
-  const [currentFilters, setCurrentFilters] = useState<ProductFilters>({});
+  const paginationRef = useRef<ProductsPagination>({
+    total: 0,
+    limit: DEFAULT_LIMIT,
+    skip: 0,
+    hasMore: false,
+  });
+  const currentFiltersRef = useRef<ProductFilters>({});
 
-  const fetchProducts = useCallback(
-    async (filters: ProductFilters, reset = true) => {
-      try {
-        setLoading(true);
-        setError(null);
+  const fetchProducts = useCallback(async (filters: ProductFilters, reset = true) => {
+    try {
+      setLoading(true);
+      setError(null);
 
-        // Build query string
-        const params = new URLSearchParams();
+      // Build query string
+      const params = new URLSearchParams();
 
-        if (filters.regionCode) {
-          params.set('regionCode', filters.regionCode);
-        }
-        if (filters.countryKey) {
-          params.set('countryKey', filters.countryKey);
-        }
-        if (filters.categoryCode) {
-          params.set('categoryCode', filters.categoryCode);
-        }
-        if (filters.subcategoryCode) {
-          params.set('subcategoryCode', filters.subcategoryCode);
-        }
-        if (filters.voltage && filters.voltage.length > 0) {
-          params.set('voltage', filters.voltage.join(','));
-        }
-        if (filters.q) {
-          params.set('q', filters.q);
-        }
-
-        params.set('limit', String(DEFAULT_LIMIT));
-        params.set('skip', reset ? '0' : String(pagination.skip + pagination.limit));
-
-        const response = await fetch(`/api/products?${params.toString()}`);
-        const data = await response.json();
-
-        if (!data.success) {
-          throw new Error(data.error || 'Failed to fetch products');
-        }
-
-        if (reset) {
-          setProducts(data.data);
-        } else {
-          setProducts((prev) => [...prev, ...data.data]);
-        }
-
-        setPagination(data.pagination);
-        setCurrentFilters(filters);
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'Failed to fetch products';
-        setError(message);
-        console.error('[useProducts] Error:', err);
-      } finally {
-        setLoading(false);
+      if (filters.regionCode) {
+        params.set('regionCode', filters.regionCode);
       }
-    },
-    [pagination.skip, pagination.limit]
-  );
+      if (filters.countryKey) {
+        params.set('countryKey', filters.countryKey);
+      }
+      if (filters.categoryCode) {
+        params.set('categoryCode', filters.categoryCode);
+      }
+      if (filters.subcategoryCode) {
+        params.set('subcategoryCode', filters.subcategoryCode);
+      }
+      if (filters.voltage && filters.voltage.length > 0) {
+        params.set('voltage', filters.voltage.join(','));
+      }
+      if (filters.q) {
+        params.set('q', filters.q);
+      }
+
+      params.set('limit', String(DEFAULT_LIMIT));
+      const nextSkip = reset ? 0 : paginationRef.current.skip + paginationRef.current.limit;
+      params.set('skip', String(nextSkip));
+
+      const response = await fetch(`/api/products?${params.toString()}`);
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to fetch products');
+      }
+
+      if (reset) {
+        setProducts(data.data);
+      } else {
+        setProducts((prev) => [...prev, ...data.data]);
+      }
+
+      setPagination(data.pagination);
+      paginationRef.current = data.pagination;
+
+      currentFiltersRef.current = filters;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to fetch products';
+      setError(message);
+      console.error('[useProducts] Error:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   const loadMore = useCallback(async () => {
-    if (!pagination.hasMore || loading) return;
-    await fetchProducts(currentFilters, false);
-  }, [currentFilters, fetchProducts, loading, pagination.hasMore]);
+    if (!paginationRef.current.hasMore || loading) return;
+    await fetchProducts(currentFiltersRef.current, false);
+  }, [fetchProducts, loading]);
 
   return {
     products,
