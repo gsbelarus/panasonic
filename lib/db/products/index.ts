@@ -5,4 +5,24 @@
 
 export * from './schema';
 export * from './indexes';
-export * from './seed';
+export {
+  // Seed data
+  seedProducts,
+  // Seeding functions
+  needsProductsSeeding,
+  seedProductsCollection,
+  bootstrapProducts,
+  // Referential integrity
+  ReferentialIntegrityError,
+  MarketSpecIntegrityError,
+  loadReferenceData,
+  validateProductIntegrity,
+  validateAllProductsIntegrity,
+  // Reference data loaders
+  loadValidCategoryCodes,
+  loadValidSubcategoryCodes,
+  loadValidRegionCodes,
+  loadValidCountryKeysByRegion,
+  // Types
+  type ReferenceData,
+} from './seed';
