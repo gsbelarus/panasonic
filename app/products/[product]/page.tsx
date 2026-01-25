@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, Suspense } from 'react';
+import { useState, useEffect, useMemo, Suspense, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -73,30 +73,50 @@ function ProductPageContent({ slug }: ProductPageContentProps) {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>('about');
   const [showAllSpecs, setShowAllSpecs] = useState(false);
+  const requestIdRef = useRef(0);
 
   // Fetch product data
   useEffect(() => {
+    const controller = new AbortController();
+    const currentRequestId = requestIdRef.current + 1;
+    requestIdRef.current = currentRequestId;
+
     async function fetchProduct() {
       try {
         setLoading(true);
         setError(null);
 
-        const response = await fetch(`/api/products/${encodeURIComponent(slug)}`);
+        const response = await fetch(`/api/products/${encodeURIComponent(slug)}`,
+          { signal: controller.signal }
+        );
         const data = await response.json();
 
         if (!response.ok || !data.success) {
-          throw new Error(data.error?.message || 'Failed to fetch product');
+          throw new Error(data.error || 'Failed to fetch product');
+        }
+
+        if (controller.signal.aborted || requestIdRef.current !== currentRequestId) {
+          return;
         }
 
         setProduct(data.data);
       } catch (err) {
+        if (controller.signal.aborted || requestIdRef.current !== currentRequestId) {
+          return;
+        }
+
         setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {
+        if (controller.signal.aborted || requestIdRef.current !== currentRequestId) {
+          return;
+        }
+
         setLoading(false);
       }
     }
 
     fetchProduct();
+    return () => controller.abort();
   }, [slug]);
 
   // Find the market spec for the selected country
@@ -446,8 +466,8 @@ function ProductPageContent({ slug }: ProductPageContentProps) {
                   type="button"
                   onClick={() => setActiveTab(tab.id)}
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${activeTab === tab.id
-                      ? 'bg-[var(--foreground)] text-white'
-                      : 'text-[var(--foreground)] hover:bg-gray-200'
+                    ? 'bg-[var(--foreground)] text-white'
+                    : 'text-[var(--foreground)] hover:bg-gray-200'
                     }`}
                 >
                   {tab.label}
