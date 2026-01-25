@@ -95,6 +95,11 @@ const SEED_SUBCATEGORIES: CreateSubcategory[] = [
   { code: 'reversible', name: 'Reversible', categoryCode: 'window-mount', sortOrder: 0 },
   { code: 'exhaust-only', name: 'Exhaust Only', categoryCode: 'window-mount', sortOrder: 1 },
   { code: 'with-remote', name: 'With Remote', categoryCode: 'window-mount', sortOrder: 2 },
+
+  // Accessories
+  { code: 'grilles', name: 'Grilles', categoryCode: 'accessories', sortOrder: 0 },
+  { code: 'ducting', name: 'Ducting', categoryCode: 'accessories', sortOrder: 1 },
+  { code: 'controls', name: 'Controls', categoryCode: 'accessories', sortOrder: 2 },
 ];
 
 // ============================================================================
