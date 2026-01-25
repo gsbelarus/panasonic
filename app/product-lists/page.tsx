@@ -501,6 +501,7 @@ function ProductListsPageContent() {
                         }
                         onGenerateReport={() => setReportModalProduct(product)}
                         categoryName={categoryNameMap.get(product.categoryCode)}
+                        selectedCountryKey={filters.countryKey}
                       />
                     ))}
                   </div>

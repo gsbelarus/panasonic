@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import type { ProductResponse } from '@/lib/db/products/schema';
 
 // ============================================================================
@@ -14,6 +15,7 @@ interface ProductCardProps {
   onCompareChange: (selected: boolean) => void;
   onGenerateReport: () => void;
   categoryName?: string;
+  selectedCountryKey?: string;
 }
 
 // ============================================================================
@@ -27,6 +29,7 @@ export function ProductCard({
   onCompareChange,
   onGenerateReport,
   categoryName,
+  selectedCountryKey = '',
 }: ProductCardProps) {
   // Get primary image or use placeholder
   const primaryImage =
@@ -34,6 +37,9 @@ export function ProductCard({
     product.assets?.images?.[0];
   const imageUrl = primaryImage?.url || '/placeholder-product.svg';
   const imageAlt = primaryImage?.alt || product.modelCode;
+
+  // Build product details URL
+  const productDetailsUrl = `/products/${product.slug}/?country=${selectedCountryKey}&air_volume=&static_pressure=&air_volume_unit=CMH&static_pressure_unit=Pa`;
 
   // Grid View
   if (viewMode === 'grid') {
@@ -57,7 +63,9 @@ export function ProductCard({
 
         {/* Product Info */}
         <h3 className="text-lg font-semibold text-[var(--foreground)] mb-1">
-          {product.modelCode}
+          <Link href={productDetailsUrl} className="hover:text-[var(--primary)] hover:underline transition-colors">
+            {product.modelCode}
+          </Link>
         </h3>
         <p className="text-sm text-[var(--muted)] mb-4">
           {categoryName || product.categoryCode}
@@ -143,7 +151,9 @@ export function ProductCard({
       {/* Product Info */}
       <div className="flex-grow min-w-0">
         <h3 className="text-lg font-semibold text-[var(--foreground)] mb-1">
-          {product.modelCode}
+          <Link href={productDetailsUrl} className="hover:text-[var(--primary)] hover:underline transition-colors">
+            {product.modelCode}
+          </Link>
         </h3>
         <p className="text-sm text-[var(--muted)]">
           {categoryName || product.categoryCode}
