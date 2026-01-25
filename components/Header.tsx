@@ -1,8 +1,24 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 export default function Header() {
+  const pathname = usePathname();
+
+  const isActive = (path: string) => {
+    if (path === '/') return pathname === '/';
+    return pathname.startsWith(path);
+  };
+
+  const getLinkClasses = (path: string) => {
+    const base = 'text-sm font-medium px-2 py-1 transition-colors';
+    if (isActive(path)) {
+      return `${base} text-[var(--foreground)] border-b-2 border-[var(--primary)]`;
+    }
+    return `${base} text-[var(--muted)] hover:text-[var(--foreground)] border-b-2 border-transparent`;
+  };
+
   return (
     <header className="bg-white border-b border-[var(--border)] sticky top-0 z-40">
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
@@ -31,21 +47,15 @@ export default function Header() {
 
           {/* Navigation */}
           <nav className="flex items-center gap-1 sm:gap-6">
-            <Link
-              href="/"
-              className="text-sm font-medium text-[var(--foreground)] border-b-2 border-[var(--primary)] px-2 py-1"
-            >
+            <Link href="/" className={getLinkClasses('/')}>
               Home
             </Link>
-            <Link
-              href="#"
-              className="text-sm font-medium text-[var(--muted)] hover:text-[var(--foreground)] transition-colors px-2 py-1"
-            >
+            <Link href="/product-lists" className={getLinkClasses('/product-lists')}>
               Products
             </Link>
             <Link
               href="#"
-              className="text-sm font-medium text-[var(--muted)] hover:text-[var(--foreground)] transition-colors px-2 py-1 hidden sm:block"
+              className="text-sm font-medium text-[var(--muted)] hover:text-[var(--foreground)] transition-colors px-2 py-1 hidden sm:block border-b-2 border-transparent"
             >
               Where to buy
             </Link>
