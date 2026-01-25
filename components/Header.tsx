@@ -54,8 +54,8 @@ export default function Header() {
               Products
             </Link>
             <Link
-              href="#"
-              className="text-sm font-medium text-[var(--muted)] hover:text-[var(--foreground)] transition-colors px-2 py-1 hidden sm:block border-b-2 border-transparent"
+              href="/where-to-buy"
+              className={getLinkClasses('/where-to-buy')}
             >
               Where to buy
             </Link>

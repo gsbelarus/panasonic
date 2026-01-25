@@ -1,6 +1,6 @@
 import dotenvFlow from 'dotenv-flow';
 import { MongoClient, Db, Collection } from 'mongodb';
-import type { Region, Country, Category, Subcategory } from './schemas';
+import type { Region, Country, Category, Subcategory, Store } from './schemas';
 import type { Product } from './products/schema';
 
 // Load environment variables using dotenv-flow
@@ -114,6 +114,7 @@ export const COLLECTIONS = {
   CATEGORIES: 'categories',
   SUBCATEGORIES: 'subcategories',
   PRODUCTS: 'products',
+  STORES: 'stores',
 } as const;
 
 /**
@@ -154,6 +155,14 @@ export async function getSubcategoriesCollection(): Promise<Collection<Subcatego
 export async function getProductsCollection(): Promise<Collection<Product>> {
   const { db } = await connectToDatabase();
   return db.collection<Product>(COLLECTIONS.PRODUCTS);
+}
+
+/**
+ * Get the stores collection with proper typing
+ */
+export async function getStoresCollection(): Promise<Collection<Store>> {
+  const { db } = await connectToDatabase();
+  return db.collection<Store>(COLLECTIONS.STORES);
 }
 
 // ============================================================================

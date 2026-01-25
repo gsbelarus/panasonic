@@ -259,6 +259,98 @@ export function validateCreateSubcategory(data: unknown): CreateSubcategory {
 }
 
 // ============================================================================
+// Store Schema
+// ============================================================================
+
+// GeoJSON Point schema for geospatial indexing
+export const GeoPointSchema = z.object({
+  type: z.literal('Point'),
+  coordinates: z.tuple([
+    z.number().min(-180).max(180), // longitude
+    z.number().min(-90).max(90),   // latitude
+  ]),
+});
+
+export const StoreSchema = z.object({
+  _id: objectIdSchema.optional(),
+  regionCode: z.enum(['africa', 'middle-east'], {
+    message: 'Invalid region code',
+  }),
+  countryIso2: z.string().length(2, 'ISO2 code must be exactly 2 characters'),
+  countryRegion: z.string().min(1, 'Country region is required').max(100),
+  city: z.string().min(1, 'City is required').max(100),
+  name: z.string().min(1, 'Store name is required').max(200),
+  phones: z.array(z.string().min(1)).min(1, 'At least one phone number is required'),
+  location: z.object({
+    lat: z.number().min(-90).max(90),
+    lng: z.number().min(-180).max(180),
+  }),
+  geo: GeoPointSchema.optional(), // GeoJSON for geospatial queries
+  addressLine1: z.string().max(200).optional(),
+  isActive: z.boolean().default(true),
+  createdAt: z.date().optional(),
+  updatedAt: z.date().optional(),
+});
+
+export const CreateStoreSchema = StoreSchema.omit({
+  _id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const StoreResponseSchema = StoreSchema.extend({
+  _id: z.string(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+  geo: GeoPointSchema.optional(),
+});
+
+// ============================================================================
+// Store API Response Schemas
+// ============================================================================
+
+export const StoresApiResponseSchema = z.object({
+  success: z.boolean(),
+  data: z.array(StoreResponseSchema),
+});
+
+// ============================================================================
+// Store TypeScript Types
+// ============================================================================
+
+export type GeoPoint = z.infer<typeof GeoPointSchema>;
+export type Store = z.infer<typeof StoreSchema>;
+export type CreateStore = z.infer<typeof CreateStoreSchema>;
+export type StoreResponse = z.infer<typeof StoreResponseSchema>;
+export type StoresApiResponse = z.infer<typeof StoresApiResponseSchema>;
+
+// ============================================================================
+// Store Validation Helper Functions
+// ============================================================================
+
+/**
+ * Parse and validate a store document from MongoDB
+ */
+export function parseStore(doc: unknown): StoreResponse {
+  const normalized = normalizeMongoDocument(doc);
+  return StoreResponseSchema.parse(normalized);
+}
+
+/**
+ * Parse and validate an array of store documents
+ */
+export function parseStores(docs: unknown[]): StoreResponse[] {
+  return docs.map(parseStore);
+}
+
+/**
+ * Validate create store payload
+ */
+export function validateCreateStore(data: unknown): CreateStore {
+  return CreateStoreSchema.parse(data);
+}
+
+// ============================================================================
 // Re-export Products Schemas and Types
 // ============================================================================
 

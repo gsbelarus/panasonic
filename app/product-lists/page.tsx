@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef, Suspense } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { FiltersPanel, type FilterState } from '@/components/filters';
@@ -38,8 +38,10 @@ const initialFilterState: FilterState = {
 // ============================================================================
 // Page Component
 // ============================================================================
+// Main Page Component (wrapped with Suspense for useSearchParams)
+// ============================================================================
 
-export default function ProductListsPage() {
+function ProductListsPageContent() {
   // View mode state
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
 
@@ -581,5 +583,26 @@ export default function ProductListsPage() {
         onClose={() => setShowReportSuccess(false)}
       />
     </div>
+  );
+}
+
+// Wrap with Suspense for useSearchParams SSR support
+export default function ProductListsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-1 bg-[var(--secondary)]">
+          <div className="max-w-[1400px] mx-auto p-4 sm:p-6">
+            <div className="flex items-center justify-center h-64">
+              <div className="text-[var(--muted)]">Loading...</div>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    }>
+      <ProductListsPageContent />
+    </Suspense>
   );
 }
