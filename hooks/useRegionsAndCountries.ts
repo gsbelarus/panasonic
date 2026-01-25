@@ -119,13 +119,14 @@ export function useCountriesByRegion(regionCode: string | null): UseCountriesByR
       return;
     }
 
+    setLoading(true);
+    setError(null);
+    setCountries([]);
+
     const controller = new AbortController();
 
     const fetchCountries = async () => {
       try {
-        setLoading(true);
-        setError(null);
-
         const response = await fetch(
           `/api/countries?regionCode=${encodeURIComponent(regionCode)}`,
           { signal: controller.signal }
