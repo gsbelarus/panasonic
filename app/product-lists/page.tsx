@@ -115,6 +115,28 @@ export default function ProductListsPage() {
 
   // Sync local selected categories when URL changes (back/forward navigation)
   useEffect(() => {
+    if (pendingQueryRef.current) return;
+    if (!hasCategoryParam && filters.selectedCategories.length === 0) return;
+
+    const isSameSelection =
+      filters.selectedCategories.length === urlCategoryCodes.length &&
+      filters.selectedCategories.every((code) => urlCategoryCodes.includes(code));
+
+    if (isSameSelection) return;
+
+    const timer = window.setTimeout(() => {
+      if (pendingQueryRef.current) return;
+      setFilters((prev) => ({
+        ...prev,
+        selectedCategories: urlCategoryCodes,
+      }));
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [hasCategoryParam, urlCategoryCodes, filters.selectedCategories]);
+
+  // Sync local selected categories when URL changes (back/forward navigation)
+  useEffect(() => {
     if (!hasCategoryParam && filters.selectedCategories.length === 0) return;
 
     const isSameSelection =
