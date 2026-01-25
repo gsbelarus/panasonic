@@ -141,10 +141,15 @@ export default function LeafletMap({
       markersLayerRef.current?.addLayer(leafletMarker);
     });
 
-    // Fit bounds to markers with padding
+  }, [markers, selectedMarkerId, onMarkerClick]);
+
+  // Fit bounds only when markers change
+  useEffect(() => {
+    if (!mapRef.current || markers.length === 0) return;
+
     const bounds = L.latLngBounds(markers.map((m) => [m.lat, m.lng]));
     mapRef.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 12 });
-  }, [markers, selectedMarkerId, onMarkerClick]);
+  }, [markers]);
 
   // Center map on selected marker
   useEffect(() => {
@@ -169,8 +174,8 @@ export default function LeafletMap({
         <button
           type="button"
           className={`px-4 py-2 text-sm font-medium transition-colors ${viewMode === 'map'
-              ? 'bg-white text-[var(--foreground)]'
-              : 'bg-gray-200 text-[var(--muted)] hover:bg-gray-100'
+            ? 'bg-white text-[var(--foreground)]'
+            : 'bg-gray-200 text-[var(--muted)] hover:bg-gray-100'
             }`}
           onClick={() => handleViewModeChange('map')}
         >
@@ -179,8 +184,8 @@ export default function LeafletMap({
         <button
           type="button"
           className={`px-4 py-2 text-sm font-medium transition-colors ${viewMode === 'satellite'
-              ? 'bg-white text-[var(--foreground)]'
-              : 'bg-gray-200 text-[var(--muted)] hover:bg-gray-100'
+            ? 'bg-white text-[var(--foreground)]'
+            : 'bg-gray-200 text-[var(--muted)] hover:bg-gray-100'
             }`}
           onClick={() => handleViewModeChange('satellite')}
         >

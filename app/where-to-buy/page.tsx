@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import StoreCard from '@/components/StoreCard';
+import { CustomSelect } from '@/components/filters';
 import { useRegions, useCountriesByRegion } from '@/hooks/useRegionsAndCountries';
 import type { StoreResponse } from '@/lib/db/schemas';
 import type { MapMarker } from '@/components/LeafletMap';
@@ -20,106 +21,12 @@ const LeafletMap = dynamic(() => import('@/components/LeafletMap'), {
 });
 
 // ============================================================================
-// Custom Select Component (matching existing styling)
+// Select Option Type
 // ============================================================================
 
 interface SelectOption {
   value: string;
   label: string;
-}
-
-interface CustomSelectProps {
-  label: string;
-  options: SelectOption[];
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  disabled?: boolean;
-  loading?: boolean;
-}
-
-function ChevronIcon({ rotated = false, className = '' }: { rotated?: boolean; className?: string }) {
-  return (
-    <svg
-      className={`transition-transform duration-200 ${rotated ? 'rotate-180' : ''} ${className}`}
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        d="M6 9L12 15L18 9"
-        stroke="#808080"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function CustomSelect({
-  label,
-  options,
-  value,
-  onChange,
-  placeholder = 'Select...',
-  disabled = false,
-  loading = false,
-}: CustomSelectProps) {
-  const [isOpen, setIsOpen] = useState(false);
-
-  const selectedOption = options.find((opt) => opt.value === value);
-
-  return (
-    <div className="flex-1">
-      <label className="block text-sm text-[var(--muted)] mb-1.5">{label}</label>
-      <div className="relative">
-        <button
-          type="button"
-          className={`w-full flex items-center justify-between px-3 py-2.5 border border-[var(--border)] rounded-lg bg-white text-left text-sm transition-colors ${disabled || loading
-            ? 'opacity-50 cursor-not-allowed'
-            : 'hover:border-[var(--border-focus)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:ring-opacity-20'
-            }`}
-          onClick={() => !disabled && !loading && setIsOpen(!isOpen)}
-          disabled={disabled || loading}
-        >
-          <span className={selectedOption ? 'text-[var(--foreground)]' : 'text-[var(--muted)]'}>
-            {loading ? 'Loading...' : selectedOption?.label || placeholder}
-          </span>
-          <ChevronIcon rotated={isOpen} className="ml-2 flex-shrink-0" />
-        </button>
-
-        {isOpen && !disabled && !loading && (
-          <>
-            <div className="fixed inset-0 z-[1001]" onClick={() => setIsOpen(false)} />
-            <ul className="absolute z-[1002] w-full mt-1 bg-white border border-[var(--border)] rounded-lg shadow-lg max-h-60 overflow-auto">
-              {options.length === 0 ? (
-                <li className="px-3 py-2 text-sm text-[var(--muted)]">No options available</li>
-              ) : (
-                options.map((option) => (
-                  <li
-                    key={option.value}
-                    className={`px-3 py-2 text-sm cursor-pointer hover:bg-gray-50 ${option.value === value
-                      ? 'bg-gray-100 text-[var(--primary)] font-medium'
-                      : 'text-[var(--foreground)]'
-                      }`}
-                    onClick={() => {
-                      onChange(option.value);
-                      setIsOpen(false);
-                    }}
-                  >
-                    {option.label}
-                  </li>
-                ))
-              )}
-            </ul>
-          </>
-        )}
-      </div>
-    </div>
-  );
 }
 
 // ============================================================================
@@ -168,6 +75,7 @@ export default function WhereToBuyPage() {
   const [stores, setStores] = useState<StoreResponse[]>([]);
   const [storesLoading, setStoresLoading] = useState(false);
   const [storesError, setStoresError] = useState<string | null>(null);
+  const storesRequestIdRef = useRef(0);
 
   // Selected store for map/card sync
   const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null);
@@ -230,6 +138,8 @@ export default function WhereToBuyPage() {
     async (sortNearest = false, lat?: number, lng?: number) => {
       if (!selectedRegion || !selectedCountry) return;
 
+      const requestId = ++storesRequestIdRef.current;
+
       setStoresLoading(true);
       setStoresError(null);
 
@@ -249,13 +159,23 @@ export default function WhereToBuyPage() {
           throw new Error(data.error || 'Failed to fetch stores');
         }
 
+        if (requestId !== storesRequestIdRef.current) {
+          return;
+        }
+
         setStores(data.data);
         setSelectedStoreId(null);
       } catch (err) {
+        if (requestId !== storesRequestIdRef.current) {
+          return;
+        }
         const message = err instanceof Error ? err.message : 'Failed to fetch stores';
         setStoresError(message);
         console.error('[WhereToBuy] Error fetching stores:', err);
       } finally {
+        if (requestId !== storesRequestIdRef.current) {
+          return;
+        }
         setStoresLoading(false);
       }
     },
@@ -284,7 +204,6 @@ export default function WhereToBuyPage() {
             setUserLocation({ lat: latitude, lng: longitude });
             setLocationError(null);
             setSortByNearest(true);
-            fetchStores(true, latitude, longitude);
           },
           (error) => {
             let message = 'Unable to get your location';
@@ -363,6 +282,9 @@ export default function WhereToBuyPage() {
               onChange={handleRegionChange}
               placeholder="Select region..."
               loading={regionsLoading}
+              wrapperClassName="flex-1"
+              overlayZIndexClass="z-[1001]"
+              menuZIndexClass="z-[1002]"
             />
             <CustomSelect
               label="Country"
@@ -372,6 +294,9 @@ export default function WhereToBuyPage() {
               placeholder="Select country..."
               loading={countriesLoading}
               disabled={!selectedRegion}
+              wrapperClassName="flex-1"
+              overlayZIndexClass="z-[1001]"
+              menuZIndexClass="z-[1002]"
             />
             <div className="flex items-end">
               <button

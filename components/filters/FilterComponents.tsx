@@ -79,6 +79,9 @@ interface CustomSelectProps {
   placeholder?: string;
   disabled?: boolean;
   loading?: boolean;
+  wrapperClassName?: string;
+  overlayZIndexClass?: string;
+  menuZIndexClass?: string;
 }
 
 export function CustomSelect({
@@ -89,20 +92,23 @@ export function CustomSelect({
   placeholder = 'Select...',
   disabled = false,
   loading = false,
+  wrapperClassName = 'mb-4',
+  overlayZIndexClass = 'z-10',
+  menuZIndexClass = 'z-20',
 }: CustomSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const selectedOption = options.find((opt) => opt.value === value);
 
   return (
-    <div className="mb-4">
+    <div className={wrapperClassName}>
       <label className="block text-sm text-[var(--muted)] mb-1.5">{label}</label>
       <div className="relative">
         <button
           type="button"
           className={`w-full flex items-center justify-between px-3 py-2.5 border border-[var(--border)] rounded-lg bg-white text-left text-sm transition-colors ${disabled || loading
-              ? 'opacity-50 cursor-not-allowed'
-              : 'hover:border-[var(--border-focus)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:ring-opacity-20'
+            ? 'opacity-50 cursor-not-allowed'
+            : 'hover:border-[var(--border-focus)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:ring-opacity-20'
             }`}
           onClick={() => !disabled && !loading && setIsOpen(!isOpen)}
           disabled={disabled || loading}
@@ -115,8 +121,8 @@ export function CustomSelect({
 
         {isOpen && !disabled && !loading && (
           <>
-            <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
-            <ul className="absolute z-20 w-full mt-1 bg-white border border-[var(--border)] rounded-lg shadow-lg max-h-60 overflow-auto">
+            <div className={`fixed inset-0 ${overlayZIndexClass}`} onClick={() => setIsOpen(false)} />
+            <ul className={`absolute ${menuZIndexClass} w-full mt-1 bg-white border border-[var(--border)] rounded-lg shadow-lg max-h-60 overflow-auto`}>
               {options.length === 0 ? (
                 <li className="px-3 py-2 text-sm text-[var(--muted)]">No options available</li>
               ) : (
@@ -124,8 +130,8 @@ export function CustomSelect({
                   <li
                     key={option.value}
                     className={`px-3 py-2 text-sm cursor-pointer hover:bg-gray-50 ${option.value === value
-                        ? 'bg-gray-100 text-[var(--primary)] font-medium'
-                        : 'text-[var(--foreground)]'
+                      ? 'bg-gray-100 text-[var(--primary)] font-medium'
+                      : 'text-[var(--foreground)]'
                       }`}
                     onClick={() => {
                       onChange(option.value);
