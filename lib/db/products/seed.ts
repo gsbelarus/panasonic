@@ -66,6 +66,31 @@ export async function loadValidSubcategoryCodes(db: Db, collectionName: string):
 }
 
 /**
+ * Load all valid subcategory codes grouped by category from the database
+ */
+export async function loadValidSubcategoryCodesByCategory(
+  db: Db,
+  collectionName: string
+): Promise<Map<string, Set<string>>> {
+  const subcategories = await db
+    .collection(collectionName)
+    .find({}, { projection: { code: 1, categoryCode: 1 } })
+    .toArray();
+
+  const subcategoryMap = new Map<string, Set<string>>();
+  for (const subcategory of subcategories) {
+    const categoryCode = subcategory.categoryCode as string;
+    const code = subcategory.code as string;
+    if (!subcategoryMap.has(categoryCode)) {
+      subcategoryMap.set(categoryCode, new Set());
+    }
+    subcategoryMap.get(categoryCode)!.add(code);
+  }
+
+  return subcategoryMap;
+}
+
+/**
  * Load all valid region codes from the database
  */
 export async function loadValidRegionCodes(db: Db, collectionName: string): Promise<Set<string>> {
@@ -104,6 +129,7 @@ export async function loadValidCountryKeysByRegion(
 export interface ReferenceData {
   categoryCodes: Set<string>;
   subcategoryCodes: Set<string>;
+  subcategoryCodesByCategory: Map<string, Set<string>>;
   regionCodes: Set<string>;
   countryKeysByRegion: Map<string, Set<string>>;
 }
@@ -120,9 +146,16 @@ export async function loadReferenceData(
     countries: string;
   }
 ): Promise<ReferenceData> {
-  const [categoryCodes, subcategoryCodes, regionCodes, countryKeysByRegion] = await Promise.all([
+  const [
+    categoryCodes,
+    subcategoryCodes,
+    subcategoryCodesByCategory,
+    regionCodes,
+    countryKeysByRegion,
+  ] = await Promise.all([
     loadValidCategoryCodes(db, collections.categories),
     loadValidSubcategoryCodes(db, collections.subcategories),
+    loadValidSubcategoryCodesByCategory(db, collections.subcategories),
     loadValidRegionCodes(db, collections.regions),
     loadValidCountryKeysByRegion(db, collections.countries),
   ]);
@@ -130,6 +163,7 @@ export async function loadReferenceData(
   return {
     categoryCodes,
     subcategoryCodes,
+    subcategoryCodesByCategory,
     regionCodes,
     countryKeysByRegion,
   };
@@ -156,13 +190,16 @@ export function validateProductIntegrity(
     );
   }
 
-  // Validate subcategoryCode
-  if (!refData.subcategoryCodes.has(product.subcategoryCode)) {
+  // Validate subcategoryCode within category
+  const subcategoriesForCategory = refData.subcategoryCodesByCategory.get(
+    product.categoryCode
+  );
+  if (!subcategoriesForCategory || !subcategoriesForCategory.has(product.subcategoryCode)) {
     throw new ReferentialIntegrityError(
       product.modelCode,
       'subcategoryCode',
       product.subcategoryCode,
-      Array.from(refData.subcategoryCodes)
+      subcategoriesForCategory ? Array.from(subcategoriesForCategory) : []
     );
   }
 
@@ -231,7 +268,139 @@ export function validateAllProductsIntegrity(
  * This array MUST remain empty - no hardcoded product data is allowed.
  * The seeding logic is implemented and runnable, but expects external data sources.
  */
-export const seedProducts: ProductInsert[] = [];
+export const seedProducts: ProductInsert[] = [
+  // Wall Mount → mapped to your category/subcategory codes:
+  // Website shows: Wall Mount / Automatic Shutter (mapped to: wall-mount / with-shutter)
+  {
+    modelCode: "15AAQ1",
+    slug: "15aaq1",
+    categoryCode: "wall-mount",
+    subcategoryCode: "with-shutter",
+    highlights: [
+      "Condenser motor with thermal cutoff",
+      "Lubricated sintered bush for long life operation",
+      "High performance propeller fan adopted",
+      "Automatic shutter with plastic cushions",
+      "Orifice equipped with oil cup",
+    ],
+    marketSpecs: [],
+    relatedModelCodes: ["20AUA", "25AUA", "30AUA"],
+    isActive: true,
+  },
+  {
+    modelCode: "20AUA",
+    slug: "20aua",
+    categoryCode: "wall-mount",
+    subcategoryCode: "with-shutter",
+    highlights: [],
+    marketSpecs: [],
+    relatedModelCodes: [],
+    isActive: true,
+  },
+  {
+    modelCode: "25AUA",
+    slug: "25aua",
+    categoryCode: "wall-mount",
+    subcategoryCode: "with-shutter",
+    highlights: [],
+    marketSpecs: [],
+    relatedModelCodes: [],
+    isActive: true,
+  },
+  {
+    modelCode: "30AUA",
+    slug: "30aua",
+    categoryCode: "wall-mount",
+    subcategoryCode: "with-shutter",
+    highlights: [],
+    marketSpecs: [],
+    relatedModelCodes: [],
+    isActive: true,
+  },
+
+  // In-line Centrifugal Fan → mapped to your category/subcategory codes:
+  // Website shows: In-line Centrifugal Fan / In-Line Centrifugal Fan (mapped to: in-line-centrifugal-fan / mixed-flow)
+  {
+    modelCode: "10MMA",
+    slug: "10mma",
+    categoryCode: "in-line-centrifugal-fan",
+    subcategoryCode: "mixed-flow",
+    highlights: [
+      "Equipped with a high-performance external rotor motor",
+      "Premium ball bearings",
+      "Integrated thermal protector",
+      "Long Operational Lifespan",
+      "Low Noise & Vibration",
+      "Optimized Airflow Design",
+      "Motor Insulation Class F",
+      "IP protection: IP44",
+      "AMCA Certified – Specifications available",
+    ],
+    marketSpecs: [],
+    relatedModelCodes: ["12MMA", "15MMA", "16MMA", "20MMA", "25MMA", "31MMA"],
+    isActive: true,
+  },
+  {
+    modelCode: "12MMA",
+    slug: "12mma",
+    categoryCode: "in-line-centrifugal-fan",
+    subcategoryCode: "mixed-flow",
+    highlights: [],
+    marketSpecs: [],
+    relatedModelCodes: [],
+    isActive: true,
+  },
+  {
+    modelCode: "15MMA",
+    slug: "15mma",
+    categoryCode: "in-line-centrifugal-fan",
+    subcategoryCode: "mixed-flow",
+    highlights: [],
+    marketSpecs: [],
+    relatedModelCodes: [],
+    isActive: true,
+  },
+  {
+    modelCode: "16MMA",
+    slug: "16mma",
+    categoryCode: "in-line-centrifugal-fan",
+    subcategoryCode: "mixed-flow",
+    highlights: [],
+    marketSpecs: [],
+    relatedModelCodes: [],
+    isActive: true,
+  },
+  {
+    modelCode: "20MMA",
+    slug: "20mma",
+    categoryCode: "in-line-centrifugal-fan",
+    subcategoryCode: "mixed-flow",
+    highlights: [],
+    marketSpecs: [],
+    relatedModelCodes: [],
+    isActive: true,
+  },
+  {
+    modelCode: "25MMA",
+    slug: "25mma",
+    categoryCode: "in-line-centrifugal-fan",
+    subcategoryCode: "mixed-flow",
+    highlights: [],
+    marketSpecs: [],
+    relatedModelCodes: [],
+    isActive: true,
+  },
+  {
+    modelCode: "31MMA",
+    slug: "31mma",
+    categoryCode: "in-line-centrifugal-fan",
+    subcategoryCode: "mixed-flow",
+    highlights: [],
+    marketSpecs: [],
+    relatedModelCodes: [],
+    isActive: true,
+  },
+];
 
 // ============================================================================
 // Seeding Functions

@@ -21,6 +21,7 @@ export {
   // Reference data loaders
   loadValidCategoryCodes,
   loadValidSubcategoryCodes,
+  loadValidSubcategoryCodesByCategory,
   loadValidRegionCodes,
   loadValidCountryKeysByRegion,
   // Types
