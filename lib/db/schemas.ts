@@ -289,3 +289,9 @@ function normalizeMongoDocument(doc: unknown): Record<string, unknown> {
 
   return result;
 }
+
+// ============================================================================
+// Re-export Products Schemas and Types
+// ============================================================================
+
+export * from './products/schema';

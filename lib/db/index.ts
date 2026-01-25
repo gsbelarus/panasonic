@@ -2,3 +2,4 @@
 export * from './connection';
 export * from './schemas';
 export * from './seed';
+export * from './products';
