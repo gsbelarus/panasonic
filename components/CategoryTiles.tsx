@@ -3,7 +3,7 @@
 import { useCategories } from '@/hooks/useCategoriesAndSubcategories';
 
 interface CategoryTilesProps {
-  onCategorySelect: (categoryCode: string) => void;
+  onCategorySelect: (_categoryCode: string) => void;
 }
 
 const defaultCategoryIcon =

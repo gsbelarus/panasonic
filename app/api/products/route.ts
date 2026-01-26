@@ -29,6 +29,7 @@ const ProductsQuerySchema = z.object({
   countryKey: z.string().optional(),
   categoryCode: z.string().optional(),
   subcategoryCode: z.string().optional(),
+  modelCodes: z.string().optional(),
   voltage: z.string().optional(), // Comma-separated values for multiple voltages
   q: z.string().optional(), // Search query
   limit: z.coerce.number().int().min(1).max(100).default(12),
@@ -87,6 +88,7 @@ export async function GET(
       countryKey: searchParams.get('countryKey') || undefined,
       categoryCode: searchParams.get('categoryCode') || undefined,
       subcategoryCode: searchParams.get('subcategoryCode') || undefined,
+      modelCodes: searchParams.get('modelCodes') || undefined,
       voltage: searchParams.get('voltage') || undefined,
       q: searchParams.get('q') || undefined,
       limit: searchParams.get('limit') || undefined,
@@ -104,7 +106,17 @@ export async function GET(
       );
     }
 
-    const { regionCode, countryKey, categoryCode, subcategoryCode, voltage, q, limit, skip } =
+    const {
+      regionCode,
+      countryKey,
+      categoryCode,
+      subcategoryCode,
+      modelCodes,
+      voltage,
+      q,
+      limit,
+      skip,
+    } =
       parsed.data;
 
     // Validate referential integrity
@@ -156,6 +168,14 @@ export async function GET(
 
       if (categoryCodes.length > 0) {
         query.categoryCode = { $in: categoryCodes };
+      }
+    }
+
+    // Filter by explicit model codes
+    if (modelCodes) {
+      const codes = splitParamList(modelCodes);
+      if (codes.length > 0) {
+        query.modelCode = { $in: codes };
       }
     }
 
