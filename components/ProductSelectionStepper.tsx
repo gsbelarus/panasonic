@@ -1,6 +1,7 @@
 'use client';
 
 import { useReducer, useEffect, useCallback, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import ConfirmModal from './ConfirmModal';
 import AirVolumeCalculatorModal from './AirVolumeCalculatorModal';
 import StaticPressureCalculatorModal from './StaticPressureCalculatorModal';
@@ -281,6 +282,7 @@ export default function ProductSelectionStepper({
   onCategoryPreselected,
 }: ProductSelectionStepperProps) {
   const [state, dispatch] = useReducer(reducer, initialState);
+  const router = useRouter();
 
   // Fetch regions and countries from API
   const { regions, loading: regionsLoading, error: regionsError } = useRegions();
@@ -439,11 +441,41 @@ export default function ProductSelectionStepper({
   };
 
   const handleSearch = () => {
-    if (validateAll()) {
-      // Mock search result
-      const modelsFound = Math.floor(Math.random() * 50) + 5;
-      dispatch({ type: 'SET_SEARCH_RESULT', result: { modelsFound } });
+    if (!validateAll()) return;
+
+    const region = regions.find((r) => r.name === state.form.region);
+    const country = countriesData.find((c) => c.name === state.form.country);
+    const category = categoriesData.find((c) => c.name === state.form.category);
+    const subcategory = subcategoriesData.find((s) => s.name === state.form.subcategory);
+
+    const params = new URLSearchParams();
+    if (region?.code) params.set('regionCode', region.code);
+    if (country?.iso2) params.set('countryKey', country.iso2);
+    if (category?.code) params.set('categoryCode', category.code);
+    if (subcategory?.code) params.set('subcategoryCode', subcategory.code);
+
+    const voltage = state.form.voltage.trim();
+    if (voltage) {
+      const normalizedVoltage = voltage.replace(/[^0-9]/g, '');
+      if (normalizedVoltage) {
+        params.set('voltage', normalizedVoltage);
+      }
     }
+
+    const airVolumeValue = Number(state.form.airVolume);
+    if (!Number.isNaN(airVolumeValue) && airVolumeValue > 0) {
+      params.set('airVolumeValue', String(airVolumeValue));
+      params.set('airVolumeUnit', state.form.airVolumeUnit || 'CMH');
+    }
+
+    const staticPressureValue = Number(state.form.staticPressure);
+    if (!Number.isNaN(staticPressureValue) && staticPressureValue > 0) {
+      params.set('staticPressureValue', String(staticPressureValue));
+      params.set('staticPressureUnit', state.form.staticPressureUnit || 'Pa');
+    }
+
+    const queryString = params.toString();
+    router.push(queryString ? `/product-lists?${queryString}` : '/product-lists');
   };
 
   const handleClearForm = () => {
