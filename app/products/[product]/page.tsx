@@ -1010,6 +1010,57 @@ function RelatedProductsSection({
   countryKey,
 }: RelatedProductsSectionProps) {
   const hasRelated = relatedModelCodes && relatedModelCodes.length > 0;
+  const [relatedProducts, setRelatedProducts] = useState<ProductResponse[]>([]);
+  const relatedRequestIdRef = useRef(0);
+
+  useEffect(() => {
+    if (!hasRelated) {
+      setRelatedProducts([]);
+      return;
+    }
+
+    const controller = new AbortController();
+    const currentRequestId = relatedRequestIdRef.current + 1;
+    relatedRequestIdRef.current = currentRequestId;
+
+    async function fetchRelatedProducts() {
+      try {
+        const response = await fetch(
+          `/api/products?modelCodes=${encodeURIComponent(relatedModelCodes.join(','))}&limit=${relatedModelCodes.length}`,
+          { signal: controller.signal }
+        );
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+          throw new Error(data.error || 'Failed to fetch related products');
+        }
+
+        if (controller.signal.aborted || relatedRequestIdRef.current !== currentRequestId) {
+          return;
+        }
+
+        setRelatedProducts(data.data);
+      } catch (_error) {
+        if (controller.signal.aborted || relatedRequestIdRef.current !== currentRequestId) {
+          return;
+        }
+        setRelatedProducts([]);
+      } finally {
+        if (controller.signal.aborted || relatedRequestIdRef.current !== currentRequestId) {
+          return;
+        }
+      }
+    }
+
+    fetchRelatedProducts();
+    return () => controller.abort();
+  }, [hasRelated, relatedModelCodes]);
+
+  const relatedProductsByModelCode = useMemo(() => {
+    const map = new Map<string, ProductResponse>();
+    relatedProducts.forEach((product) => map.set(product.modelCode, product));
+    return map;
+  }, [relatedProducts]);
 
   return (
     <div className="border-t border-[var(--border)] pt-8">
@@ -1018,32 +1069,54 @@ function RelatedProductsSection({
       </h2>
       {hasRelated ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-          {relatedModelCodes.map((modelCode) => (
-            <Link
-              key={modelCode}
-              href={`/products/${modelCode.toLowerCase()}/?country=${countryKey}&air_volume=&static_pressure=&air_volume_unit=CMH&static_pressure_unit=Pa`}
-              className="block p-4 bg-white border border-[var(--border)] rounded-lg hover:shadow-md transition-shadow"
-            >
-              <div className="aspect-square bg-gray-100 rounded mb-2 flex items-center justify-center">
-                <svg
-                  className="w-12 h-12 text-gray-400"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
+          {relatedModelCodes.map((modelCode) => {
+            const relatedProduct = relatedProductsByModelCode.get(modelCode);
+            const slug = relatedProduct?.slug;
+
+            const cardContent = (
+              <>
+                <div className="aspect-square bg-gray-100 rounded mb-2 flex items-center justify-center">
+                  <svg
+                    className="w-12 h-12 text-gray-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1}
+                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
+                  </svg>
+                </div>
+                <p className="text-sm font-medium text-[var(--foreground)] text-center">
+                  {modelCode}
+                </p>
+              </>
+            );
+
+            if (slug) {
+              return (
+                <Link
+                  key={modelCode}
+                  href={`/products/${slug}/?country=${countryKey}&air_volume=&static_pressure=&air_volume_unit=CMH&static_pressure_unit=Pa`}
+                  className="block p-4 bg-white border border-[var(--border)] rounded-lg hover:shadow-md transition-shadow"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1}
-                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  />
-                </svg>
+                  {cardContent}
+                </Link>
+              );
+            }
+
+            return (
+              <div
+                key={modelCode}
+                className="block p-4 bg-white border border-[var(--border)] rounded-lg opacity-70"
+              >
+                {cardContent}
               </div>
-              <p className="text-sm font-medium text-[var(--foreground)] text-center">
-                {modelCode}
-              </p>
-            </Link>
-          ))}
+            );
+          })}
         </div>
       ) : (
         <div className="flex items-center gap-2 text-[var(--muted)]">

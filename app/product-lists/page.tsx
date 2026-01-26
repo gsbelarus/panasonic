@@ -94,7 +94,7 @@ function ProductListsPageContent() {
   } = useProducts();
 
   const handleFiltersChange = useCallback(
-    (nextFilters: FilterState | ((prev: FilterState) => FilterState)) => {
+    (nextFilters: FilterState | ((_prev: FilterState) => FilterState)) => {
       setFilters((prev) => {
         const resolved =
           typeof nextFilters === 'function' ? nextFilters(prev) : nextFilters;
