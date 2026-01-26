@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import ConfirmModal from './ConfirmModal';
 import AirVolumeCalculatorModal from './AirVolumeCalculatorModal';
 import StaticPressureCalculatorModal from './StaticPressureCalculatorModal';
-import ResultsBanner from './ResultsBanner';
 import { useRegions, useCountriesByRegion } from '@/hooks/useRegionsAndCountries';
 import { useCategories, useSubcategoriesByCategory } from '@/hooks/useCategoriesAndSubcategories';
 import type { CountryResponse } from '@/lib/db/schemas';
@@ -110,7 +109,6 @@ interface State {
   errors: FormErrors;
   modals: ModalState;
   isDirty: boolean;
-  searchResult: { modelsFound: number } | null;
 }
 
 type Action =
@@ -120,7 +118,6 @@ type Action =
   | { type: 'CLEAR_ERRORS' }
   | { type: 'TOGGLE_MODAL'; modal: keyof ModalState; value: boolean }
   | { type: 'RESET_FORM' }
-  | { type: 'SET_SEARCH_RESULT'; result: { modelsFound: number } | null }
   | { type: 'SET_DIRTY'; value: boolean }
   | { type: 'APPLY_AIR_VOLUME'; value: number; unit: string }
   | { type: 'APPLY_STATIC_PRESSURE'; value: number; unit: string }
@@ -149,7 +146,6 @@ const initialState: State = {
     staticPressureCalc: false,
   },
   isDirty: false,
-  searchResult: null,
 };
 
 function reducer(state: State, action: Action): State {
@@ -181,7 +177,6 @@ function reducer(state: State, action: Action): State {
         form: newForm,
         isDirty: true,
         errors: nextErrors,
-        searchResult: null,
       };
     }
     case 'SET_ERROR':
@@ -200,8 +195,6 @@ function reducer(state: State, action: Action): State {
       };
     case 'RESET_FORM':
       return { ...initialState };
-    case 'SET_SEARCH_RESULT':
-      return { ...state, searchResult: action.result };
     case 'SET_DIRTY':
       return { ...state, isDirty: action.value };
     case 'APPLY_AIR_VOLUME':
@@ -214,7 +207,6 @@ function reducer(state: State, action: Action): State {
         },
         errors: { ...state.errors, airVolume: undefined },
         isDirty: true,
-        searchResult: null,
       };
     case 'APPLY_STATIC_PRESSURE':
       return {
@@ -226,7 +218,6 @@ function reducer(state: State, action: Action): State {
         },
         errors: { ...state.errors, staticPressure: undefined },
         isDirty: true,
-        searchResult: null,
       };
     case 'SET_CATEGORY':
       return {
@@ -238,7 +229,6 @@ function reducer(state: State, action: Action): State {
         },
         isDirty: true,
         errors: { ...state.errors, category: undefined },
-        searchResult: null,
       };
     case 'SET_COUNTRY_WITH_DEFAULTS':
       return {
@@ -251,7 +241,6 @@ function reducer(state: State, action: Action): State {
         },
         isDirty: true,
         errors: { ...state.errors, country: undefined },
-        searchResult: null,
       };
     case 'SET_REGION':
       return {
@@ -265,7 +254,6 @@ function reducer(state: State, action: Action): State {
         },
         isDirty: true,
         errors: { ...state.errors, region: undefined },
-        searchResult: null,
       };
     default:
       return state;
@@ -961,15 +949,6 @@ export default function ProductSelectionStepper({
             </button>
           </div>
 
-          {/* Results Banner */}
-          {state.searchResult && (
-            <ResultsBanner
-              modelsFound={state.searchResult.modelsFound}
-              onClose={() =>
-                dispatch({ type: 'SET_SEARCH_RESULT', result: null })
-              }
-            />
-          )}
         </div>
       </div>
 

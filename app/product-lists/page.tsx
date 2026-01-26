@@ -212,7 +212,6 @@ function ProductListsPageContent() {
       filters.staticPressureValue === urlFilters.staticPressureValue &&
       filters.searchQuery === urlFilters.searchQuery;
 
-    if (isSameFilters && !hasRelevantParams) return;
     if (isSameFilters) return;
 
     const timer = window.setTimeout(() => {
@@ -270,12 +269,12 @@ function ProductListsPageContent() {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (searchInput !== filters.searchQuery) {
-        setFilters((prev) => ({ ...prev, searchQuery: searchInput }));
+        handleFiltersChange((prev) => ({ ...prev, searchQuery: searchInput }));
       }
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [searchInput, filters.searchQuery]);
+  }, [searchInput, filters.searchQuery, handleFiltersChange]);
 
   // Category name lookup
   const categoryNameMap = useMemo(() => {
