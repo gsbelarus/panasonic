@@ -3,8 +3,8 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
-  --primary: #1a1a2e;
-  --primary-hover: #16213e;
+  --primary: #b91c1c;
+  --primary-hover: red;
   --secondary: #f8f9fa;
   --border: #e5e7eb;
   --border-focus: #6b7280;
