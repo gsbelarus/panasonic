@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { ConsultationModal } from '@/components/ConsultationModal';
 import type { ProductResponse, ProductMarketSpec, ProductPQSeries } from '@/lib/db/products/schema';
 import {
   LineChart,
@@ -74,6 +75,7 @@ function ProductPageContent({ slug }: ProductPageContentProps) {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>('about');
   const [showAllSpecs, setShowAllSpecs] = useState(false);
+  const [isConsultationModalOpen, setIsConsultationModalOpen] = useState(false);
   const requestIdRef = useRef(0);
 
   // Fetch product data
@@ -457,6 +459,7 @@ function ProductPageContent({ slug }: ProductPageContentProps) {
               {/* CTA Button */}
               <button
                 type="button"
+                onClick={() => setIsConsultationModalOpen(true)}
                 className="w-full py-3 px-6 bg-[var(--primary)] text-white font-medium rounded-lg hover:bg-[var(--primary-hover)] transition-colors flex items-center justify-center gap-2"
               >
                 Get free consultation
@@ -471,6 +474,13 @@ function ProductPageContent({ slug }: ProductPageContentProps) {
               </button>
             </div>
           </div>
+
+          {/* Consultation Modal */}
+          <ConsultationModal
+            isOpen={isConsultationModalOpen}
+            onClose={() => setIsConsultationModalOpen(false)}
+            productModelCode={product.modelCode}
+          />
 
           {/* Tab Bar */}
           <div className="flex justify-center mb-8">
