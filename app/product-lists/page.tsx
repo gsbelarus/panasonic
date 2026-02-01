@@ -290,23 +290,27 @@ function ProductListsPageContent() {
   const showNoResultsState =
     !showLocationEmptyState && !productsLoading && !productsError && products.length === 0;
 
-  // Handle comparison toggle
-  const handleCompareChange = (productId: string, selected: boolean) => {
+  // Handle comparison toggle - use product slug for comparison
+  const handleCompareChange = (productSlug: string, selected: boolean) => {
     const newComparisonProducts = new Set(comparisonProducts);
     if (selected) {
       if (newComparisonProducts.size < 3) {
-        newComparisonProducts.add(productId);
+        newComparisonProducts.add(productSlug);
       }
     } else {
-      newComparisonProducts.delete(productId);
+      newComparisonProducts.delete(productSlug);
     }
     setComparisonProducts(newComparisonProducts);
   };
 
-  const comparisonIds = useMemo(() => Array.from(comparisonProducts), [comparisonProducts]);
-  const comparisonHref = comparisonIds.length > 0
-    ? `/comparison?ids=${encodeURIComponent(comparisonIds.join(','))}`
-    : '/comparison';
+  const comparisonSlugs = useMemo(() => Array.from(comparisonProducts), [comparisonProducts]);
+  const comparisonHref = useMemo(() => {
+    if (comparisonSlugs.length === 0) return '/comparison';
+    const params = new URLSearchParams();
+    params.set('products', comparisonSlugs.join(','));
+    if (filters.countryKey) params.set('country', filters.countryKey);
+    return `/comparison?${params.toString()}`;
+  }, [comparisonSlugs, filters.countryKey]);
 
   // Handle report generation (stubbed)
   const handleGenerateReport = (type: 'jpeg' | 'pdf', options: string[]) => {
@@ -565,9 +569,9 @@ function ProductListsPageContent() {
                         key={product._id}
                         product={product}
                         viewMode={viewMode}
-                        isCompareSelected={comparisonProducts.has(product._id)}
+                        isCompareSelected={comparisonProducts.has(product.slug)}
                         onCompareChange={(selected) =>
-                          handleCompareChange(product._id, selected)
+                          handleCompareChange(product.slug, selected)
                         }
                         onGenerateReport={() => setReportModalProduct(product)}
                         categoryName={categoryNameMap.get(product.categoryCode)}

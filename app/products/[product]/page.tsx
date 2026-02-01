@@ -941,8 +941,9 @@ function PQCurveTab({ marketAvailabilityText, pqCurves }: PQCurveTabProps) {
                 }}
                 labelStyle={{ fontWeight: 600, marginBottom: 4 }}
                 labelFormatter={(value) => `Air Volume: ${value} CMH`}
-                formatter={(value: number, name: string) => {
-                  const index = parseInt(name.replace('curve', ''), 10);
+                formatter={(value, name) => {
+                  if (value === undefined) return ['—', ''];
+                  const index = parseInt(String(name).replace('curve', ''), 10);
                   const label = effectivePQCurves?.[index]?.label || 'PQ Curve';
                   return [`${value} Pa`, label];
                 }}
