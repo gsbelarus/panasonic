@@ -7,10 +7,12 @@
   --primary-hover: red;
   --secondary: #f8f9fa;
   --border: #e5e7eb;
-  --border-focus: #6b7280;
+  --border-focus: #b91c1c;
   --error: #dc2626;
   --success: #16a34a;
   --muted: #6b7280;
+  --light-background: #f9fafb;
+  --light-primary: #ffC9C9;
 }
 
 @theme inline {
@@ -24,14 +26,22 @@
   --color-error: var(--error);
   --color-success: var(--success);
   --color-muted: var(--muted);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-light-background: var(--light-background);
+  --color-light-primary: var(--light-primary);
+  --font-sans: var(--font-poppins);
+  --text-lg: 20px;
+  --text-2xl: 36px;
+  --text-3xl: 48px;
+  --text-4xl: 56px;
+  --text-lg--line-height: 1.4;
+  --spacing-72: 18rem;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  font-size: 16px;
 }
 
 html {

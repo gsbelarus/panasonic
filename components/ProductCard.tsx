@@ -35,7 +35,7 @@ export function ProductCard({
   const primaryImage =
     product.assets?.images?.find((img) => img.type === 'primary') ||
     product.assets?.images?.[0];
-  const imageUrl = primaryImage?.url || '/placeholder-product.svg';
+  const imageUrl = primaryImage?.url || '/12nsb-15nsb-18nsb-18nfb-1-1-scaled.jpg';
   const imageAlt = primaryImage?.alt || product.modelCode;
 
   // Build product details URL

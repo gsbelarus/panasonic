@@ -501,7 +501,7 @@ export default function ProductSelectionStepper({
   return (
     <section id="product-selection" className="py-12 sm:py-16 bg-white">
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
-        <h2 className="text-xl sm:text-2xl font-bold text-[var(--foreground)] mb-8">
+        <h2 className="text-xl sm:text-2xl text-[var(--foreground)] mb-8">
           Product Selection
         </h2>
 
@@ -509,12 +509,12 @@ export default function ProductSelectionStepper({
           {/* Step 1 */}
           <div className="flex gap-4 sm:gap-6 pb-8 border-b border-[var(--border)]">
             <div className="flex-shrink-0">
-              <div className="w-8 h-8 rounded-full bg-[var(--primary)] text-white flex items-center justify-center text-sm font-semibold">
+              <div className="w-8 h-8 rounded-full bg-[var(--primary)] text-white flex items-center justify-center text-sm ">
                 1
               </div>
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-base sm:text-lg font-semibold text-[var(--foreground)] mb-4">
+              <h3 className="text-base sm:text-lg text-[var(--foreground)] mb-4">
                 Select Region and Country
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -595,12 +595,12 @@ export default function ProductSelectionStepper({
             className="flex gap-4 sm:gap-6 py-8 border-b border-[var(--border)]"
           >
             <div className="flex-shrink-0">
-              <div className="w-8 h-8 rounded-full bg-[var(--primary)] text-white flex items-center justify-center text-sm font-semibold">
+              <div className="w-8 h-8 rounded-full bg-[var(--primary)] text-white flex items-center justify-center text-sm ">
                 2
               </div>
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-base sm:text-lg font-semibold text-[var(--foreground)] mb-4">
+              <h3 className="text-base sm:text-lg text-[var(--foreground)] mb-4">
                 Select Category
               </h3>
 
@@ -709,12 +709,12 @@ export default function ProductSelectionStepper({
           {/* Step 3 */}
           <div className="flex gap-4 sm:gap-6 py-8 border-b border-[var(--border)]">
             <div className="flex-shrink-0">
-              <div className="w-8 h-8 rounded-full bg-[var(--primary)] text-white flex items-center justify-center text-sm font-semibold">
+              <div className="w-8 h-8 rounded-full bg-[var(--primary)] text-white flex items-center justify-center text-sm ">
                 3
               </div>
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-base sm:text-lg font-semibold text-[var(--foreground)] mb-2">
+              <h3 className="text-base sm:text-lg text-[var(--foreground)] mb-2">
                 Select Voltage and Frequency
               </h3>
               <p className="text-xs text-[var(--muted)] mb-4">
@@ -788,12 +788,12 @@ export default function ProductSelectionStepper({
           {/* Step 4 */}
           <div className="flex gap-4 sm:gap-6 pt-8">
             <div className="flex-shrink-0">
-              <div className="w-8 h-8 rounded-full bg-[var(--primary)] text-white flex items-center justify-center text-sm font-semibold">
+              <div className="w-8 h-8 rounded-full bg-[var(--primary)] text-white flex items-center justify-center text-sm ">
                 4
               </div>
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-base sm:text-lg font-semibold text-[var(--foreground)] mb-4">
+              <h3 className="text-base sm:text-lg  text-[var(--foreground)] mb-4">
                 Enter Air Volume and Static Pressure
               </h3>
               <div className="space-y-6">
