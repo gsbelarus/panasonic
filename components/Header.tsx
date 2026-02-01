@@ -1,7 +1,8 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Image from 'next/image'
 
 const SearchIcon = () =>
@@ -12,6 +13,23 @@ const SearchIcon = () =>
 
 export default function Header() {
   const pathname = usePathname();
+  const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const handleSearch = () => {
+    const trimmedQuery = searchQuery.trim();
+    if (trimmedQuery) {
+      router.push(`/product-lists?q=${encodeURIComponent(trimmedQuery)}`);
+    } else {
+      router.push('/product-lists');
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
 
   const isActive = (path: string) => {
     if (path === '/') return pathname === '/';
@@ -59,10 +77,20 @@ export default function Header() {
             <div className='flex flex-row gap-4 items-center'>
               <input
                 type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={handleKeyDown}
                 placeholder="Search for a model or category..."
                 className="h-11 border border-[var(--border)] rounded-2xl px-4 py-2 focus:outline-none focus:ring-1 focus:ring-[var(--border-focus)] text-sm bg-[var(--color-light-background)]"
               />
-              <SearchIcon />
+              <button
+                type="button"
+                onClick={handleSearch}
+                className="hover:text-[var(--primary)] transition-colors"
+                aria-label="Search"
+              >
+                <SearchIcon />
+              </button>
             </div>
           </div>
         </div>
