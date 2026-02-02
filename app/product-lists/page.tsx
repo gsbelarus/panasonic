@@ -249,6 +249,10 @@ function ProductListsPageContent() {
             : undefined,
         voltage: filters.selectedVoltages.length > 0 ? filters.selectedVoltages : undefined,
         q: filters.searchQuery || undefined,
+        airVolumeValue: filters.airVolumeValue > 0 ? filters.airVolumeValue : undefined,
+        airVolumeUnit: filters.airVolumeValue > 0 ? filters.airVolumeUnit : undefined,
+        staticPressureValue: filters.staticPressureValue > 0 ? filters.staticPressureValue : undefined,
+        staticPressureUnit: filters.staticPressureValue > 0 ? filters.staticPressureUnit : undefined,
       };
       fetchProducts(productFilters);
     } else {
@@ -261,6 +265,10 @@ function ProductListsPageContent() {
     filters.selectedSubcategories,
     filters.selectedVoltages,
     filters.searchQuery,
+    filters.airVolumeValue,
+    filters.airVolumeUnit,
+    filters.staticPressureValue,
+    filters.staticPressureUnit,
     fetchProducts,
     resetProducts,
   ]);
