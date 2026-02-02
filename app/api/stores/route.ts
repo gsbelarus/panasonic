@@ -15,7 +15,12 @@ async function ensureInitialized(): Promise<void> {
   if (!initializationPromise) {
     initializationPromise = initializeDatabase();
   }
-  await initializationPromise;
+  const success = await initializationPromise;
+  if (!success) {
+    // Clear the cached promise so next request can retry
+    initializationPromise = null;
+    throw new Error('Database initialization failed');
+  }
 }
 
 // ============================================================================
