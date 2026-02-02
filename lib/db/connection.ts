@@ -68,7 +68,7 @@ export async function connectToDatabase(): Promise<DbConnection> {
   }
 
   const config = getDbConfig();
-  const uri = buildConnectionUri(config);
+  const uri = process.env.DB_URI || buildConnectionUri(config);
 
   const client = new MongoClient(uri, {
     maxPoolSize: 10,
