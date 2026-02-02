@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { ConsultationModal } from '@/components/ConsultationModal';
 import type { ProductResponse, ProductMarketSpec, ProductPQSeries } from '@/lib/db/products/schema';
 import {
   LineChart,
@@ -15,6 +16,7 @@ import {
   CartesianGrid,
   Legend,
   ResponsiveContainer,
+  Tooltip,
 } from 'recharts';
 
 // ============================================================================
@@ -73,6 +75,7 @@ function ProductPageContent({ slug }: ProductPageContentProps) {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>('about');
   const [showAllSpecs, setShowAllSpecs] = useState(false);
+  const [isConsultationModalOpen, setIsConsultationModalOpen] = useState(false);
   const requestIdRef = useRef(0);
 
   // Fetch product data
@@ -149,12 +152,26 @@ function ProductPageContent({ slug }: ProductPageContentProps) {
 
   // Get primary image
   const primaryImage = useMemo(() => {
-    if (!product?.assets?.images) return null;
-    return (
-      product.assets.images.find((img) => img.type === 'primary') ||
-      product.assets.images[0] ||
-      null
-    );
+
+    let res;
+
+    if (product?.assets?.images) {
+      res =
+        product.assets.images.find((img) => img.type === 'primary') ||
+        product.assets.images[0] ||
+        null;
+    }
+
+    if (res) {
+      return res;
+    }
+
+    return {
+      url: '/24CMHA-24CMUA-1.jpg',
+      alt: 'Placeholder Image',
+      order: 0,
+      type: 'primary',
+    }
   }, [product]);
 
   // Get PQ curve data for chart
@@ -442,6 +459,7 @@ function ProductPageContent({ slug }: ProductPageContentProps) {
               {/* CTA Button */}
               <button
                 type="button"
+                onClick={() => setIsConsultationModalOpen(true)}
                 className="w-full py-3 px-6 bg-[var(--primary)] text-white font-medium rounded-lg hover:bg-[var(--primary-hover)] transition-colors flex items-center justify-center gap-2"
               >
                 Get free consultation
@@ -457,6 +475,13 @@ function ProductPageContent({ slug }: ProductPageContentProps) {
             </div>
           </div>
 
+          {/* Consultation Modal */}
+          <ConsultationModal
+            isOpen={isConsultationModalOpen}
+            onClose={() => setIsConsultationModalOpen(false)}
+            productModelCode={product.modelCode}
+          />
+
           {/* Tab Bar */}
           <div className="flex justify-center mb-8">
             <div className="inline-flex bg-gray-100 rounded-full p-1">
@@ -465,7 +490,7 @@ function ProductPageContent({ slug }: ProductPageContentProps) {
                   key={tab.id}
                   type="button"
                   onClick={() => setActiveTab(tab.id)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${activeTab === tab.id
+                  className={`px-6 py-4 rounded-full text-xl font-medium transition-colors ${activeTab === tab.id
                     ? 'bg-[var(--foreground)] text-white'
                     : 'text-[var(--foreground)] hover:bg-gray-200'
                     }`}
@@ -558,11 +583,10 @@ function AboutProductTab({ product }: { product: ProductResponse }) {
       {tiles.map((highlight, index) => (
         <div
           key={index}
-          className={`relative h-48 rounded-lg overflow-hidden ${index % 3 === 0 ? 'bg-gray-100' : index % 2 === 0 ? 'bg-gray-100' : 'bg-gradient-to-br from-gray-300 to-gray-500'
-            }`}
+          className={`relative h-72 overflow-hidden bg-gradient-to-br from-red-100 to-gray-500`}
         >
           <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/50 to-transparent">
-            <p className={`text-sm font-medium ${index % 2 === 0 ? 'text-[var(--primary)]' : 'text-white'}`}>
+            <p className={`text-lg font-medium ${index % 2 === 0 ? 'text-[var(--primary)]' : 'text-white'}`}>
               {highlight}
             </p>
           </div>
@@ -592,7 +616,8 @@ function SpecificationTab({
   onToggleShowAll,
 }: SpecificationTabProps) {
   // Get dimension image
-  const dimensionImage = product.assets?.images?.find((img) => img.type === 'technical');
+  const dimensionImage = product.assets?.images?.find((img) => img.type === 'technical')
+    ?? { url: '/15AAQ1-1.jpg', alt: 'Dimension Image', order: 0, type: 'technical' };
 
   return (
     <div>
@@ -770,31 +795,105 @@ interface PQCurveTabProps {
 }
 
 function PQCurveTab({ marketAvailabilityText, pqCurves }: PQCurveTabProps) {
-  // Transform PQ curve data for Recharts
+  // Generate mock PQ curve data for demo purposes
+  const mockPQCurves: ProductPQSeries[] = useMemo(() => [
+    {
+      label: 'Hi Speed',
+      points: [
+        { airVolume: 0, staticPressure: 180 },
+        { airVolume: 50, staticPressure: 175 },
+        { airVolume: 100, staticPressure: 165 },
+        { airVolume: 150, staticPressure: 150 },
+        { airVolume: 200, staticPressure: 130 },
+        { airVolume: 250, staticPressure: 105 },
+        { airVolume: 300, staticPressure: 75 },
+        { airVolume: 350, staticPressure: 40 },
+        { airVolume: 400, staticPressure: 0 },
+      ],
+    },
+    {
+      label: 'Lo Speed',
+      points: [
+        { airVolume: 0, staticPressure: 90 },
+        { airVolume: 40, staticPressure: 85 },
+        { airVolume: 80, staticPressure: 78 },
+        { airVolume: 120, staticPressure: 65 },
+        { airVolume: 160, staticPressure: 48 },
+        { airVolume: 200, staticPressure: 28 },
+        { airVolume: 240, staticPressure: 0 },
+      ],
+    },
+  ], []);
+
+  // Use provided pqCurves or fall back to mock data
+  const effectivePQCurves = pqCurves && pqCurves.length > 0 ? pqCurves : mockPQCurves;
+
+  // Helper function to interpolate a value between two points
+  const interpolate = (x: number, x1: number, y1: number, x2: number, y2: number): number => {
+    return y1 + ((y2 - y1) * (x - x1)) / (x2 - x1);
+  };
+
+  // Helper function to get interpolated static pressure for a given air volume on a curve
+  const getInterpolatedValue = (airVolume: number, points: { airVolume: number; staticPressure: number }[]): number | null => {
+    // Sort points by air volume
+    const sorted = [...points].sort((a, b) => a.airVolume - b.airVolume);
+
+    // Check if airVolume is outside the curve's range
+    if (airVolume < sorted[0].airVolume || airVolume > sorted[sorted.length - 1].airVolume) {
+      return null;
+    }
+
+    // Find exact match
+    const exact = sorted.find(p => p.airVolume === airVolume);
+    if (exact) return exact.staticPressure;
+
+    // Find surrounding points and interpolate
+    for (let i = 0; i < sorted.length - 1; i++) {
+      if (airVolume > sorted[i].airVolume && airVolume < sorted[i + 1].airVolume) {
+        return interpolate(
+          airVolume,
+          sorted[i].airVolume,
+          sorted[i].staticPressure,
+          sorted[i + 1].airVolume,
+          sorted[i + 1].staticPressure
+        );
+      }
+    }
+
+    return null;
+  };
+
+  // Transform PQ curve data for Recharts with interpolation
   const chartData = useMemo(() => {
-    if (!pqCurves || pqCurves.length === 0) return null;
-
-    // Get all unique air volume values across all curves
-    const allPoints: { airVolume: number;[key: string]: number }[] = [];
-
-    pqCurves.forEach((curve, index) => {
+    // Collect all unique air volume values across all curves
+    const allAirVolumes = new Set<number>();
+    effectivePQCurves.forEach((curve) => {
       curve.points.forEach((point) => {
-        const existing = allPoints.find((p) => p.airVolume === point.airVolume);
-        const key = `curve${index}`;
-        if (existing) {
-          existing[key] = point.staticPressure;
-        } else {
-          allPoints.push({
-            airVolume: point.airVolume,
-            [key]: point.staticPressure,
-          });
-        }
+        allAirVolumes.add(point.airVolume);
       });
     });
 
-    // Sort by air volume
-    return allPoints.sort((a, b) => a.airVolume - b.airVolume);
-  }, [pqCurves]);
+    // Sort air volumes
+    const sortedAirVolumes = Array.from(allAirVolumes).sort((a, b) => a - b);
+
+    // Build chart data with interpolated values for each curve
+    const result: { airVolume: number;[key: string]: number | undefined }[] = [];
+
+    sortedAirVolumes.forEach((airVolume) => {
+      const point: { airVolume: number;[key: string]: number | undefined } = { airVolume };
+
+      effectivePQCurves.forEach((curve, index) => {
+        const value = getInterpolatedValue(airVolume, curve.points);
+        if (value !== null) {
+          point[`curve${index}`] = Math.round(value * 10) / 10; // Round to 1 decimal
+        }
+      });
+
+      result.push(point);
+    });
+
+    return result;
+  }, [effectivePQCurves]);
 
   return (
     <div>
@@ -840,18 +939,35 @@ function PQCurveTab({ marketAvailabilityText, pqCurves }: PQCurveTabProps) {
                 wrapperStyle={{ paddingTop: 20 }}
                 formatter={(value) => {
                   const index = parseInt(value.replace('curve', ''), 10);
-                  return pqCurves?.[index]?.label || 'PQ Curve (Hi Speed)';
+                  return effectivePQCurves?.[index]?.label || 'PQ Curve (Hi Speed)';
                 }}
               />
-              {pqCurves?.map((curve, index) => (
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: 'white',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                }}
+                labelStyle={{ fontWeight: 600, marginBottom: 4 }}
+                labelFormatter={(value) => `Air Volume: ${value} CMH`}
+                formatter={(value, name) => {
+                  if (value === undefined) return ['—', ''];
+                  const index = parseInt(String(name).replace('curve', ''), 10);
+                  const label = effectivePQCurves?.[index]?.label || 'PQ Curve';
+                  return [`${value} Pa`, label];
+                }}
+              />
+              {effectivePQCurves?.map((curve, index) => (
                 <Line
                   key={index}
                   type="monotone"
                   dataKey={`curve${index}`}
                   name={`curve${index}`}
-                  stroke="#dc2626"
+                  stroke={index === 0 ? '#dc2626' : '#2563eb'}
                   strokeWidth={2}
                   dot={false}
+                  connectNulls={false}
                 />
               ))}
             </LineChart>
@@ -889,10 +1005,10 @@ function HelpDocumentsTab({ product }: { product: ProductResponse }) {
   return (
     <div>
       {/* Download All Header */}
-      <div className="flex justify-end mb-4">
+      <div className="flex justify-end">
         <button
           type="button"
-          className="flex items-center gap-2 text-sm text-[var(--primary)] hover:underline"
+          className="flex items-center gap-2 text-lg text-[var(--primary)] hover:underline"
           disabled={documents.length === 0}
         >
           Download all files
@@ -919,14 +1035,13 @@ function HelpDocumentsTab({ product }: { product: ProductResponse }) {
                 {doc.title || `KDK ${product.categoryCode}`}
               </span>
               <a
-                href={doc.url}
-                target="_blank"
-                rel="noopener noreferrer"
+                href={'/_wp-content_uploads_2025_01_KDK-Wall-Mount-Ventilation-Fan.pdf' /*doc.url*/}
+                download
                 className="p-2 hover:bg-gray-100 rounded transition-colors"
                 title="Download"
               >
                 <svg
-                  className="w-5 h-5 text-[var(--muted)]"
+                  className="w-8 h-8 text-[var(--muted)]"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -943,7 +1058,7 @@ function HelpDocumentsTab({ product }: { product: ProductResponse }) {
           ))}
         </div>
       ) : (
-        <div className="py-8 text-center">
+        <div className="py-8 text-lg text-center">
           <div className="flex items-center justify-between py-3 border-b border-[var(--border)]">
             <span className="text-[var(--foreground)]">
               KDK {product.categoryCode}
@@ -953,19 +1068,26 @@ function HelpDocumentsTab({ product }: { product: ProductResponse }) {
               className="p-2 hover:bg-gray-100 rounded transition-colors"
               title="Download"
             >
-              <svg
-                className="w-5 h-5 text-[var(--muted)]"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
+              <a
+                href={'/_wp-content_uploads_2025_01_KDK-Wall-Mount-Ventilation-Fan.pdf' /*doc.url*/}
+                download
+                className="p-2 hover:bg-gray-100 rounded transition-colors"
+                title="Download"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                />
-              </svg>
+                <svg
+                  className="w-8 h-8 text-[var(--muted)]"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                  />
+                </svg>
+              </a>
             </button>
           </div>
         </div>
@@ -1064,7 +1186,7 @@ function RelatedProductsSection({
 
   return (
     <div className="border-t border-[var(--border)] pt-8">
-      <h2 className="text-xl font-semibold text-[var(--foreground)] mb-4">
+      <h2 className="text-2xl text-[var(--foreground)] mb-4">
         Related products
       </h2>
       {hasRelated ? (
@@ -1076,19 +1198,12 @@ function RelatedProductsSection({
             const cardContent = (
               <>
                 <div className="aspect-square bg-gray-100 rounded mb-2 flex items-center justify-center">
-                  <svg
-                    className="w-12 h-12 text-gray-400"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1}
-                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                    />
-                  </svg>
+                  <Image
+                    src='/KDK-Landing-Page-Card_Wall-Mount-1.jpg'
+                    alt='Related product image'
+                    width={200}
+                    height={200}
+                  />
                 </div>
                 <p className="text-sm font-medium text-[var(--foreground)] text-center">
                   {modelCode}

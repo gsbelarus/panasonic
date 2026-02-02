@@ -36,7 +36,7 @@ interface SelectOption {
 interface ToggleSwitchProps {
   label: string;
   checked: boolean;
-  onChange: (checked: boolean) => void;
+  onChange: (_checked: boolean) => void;
   disabled?: boolean;
 }
 
@@ -270,7 +270,7 @@ export default function WhereToBuyPage() {
       <main className="flex-1 bg-white">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-8">
           {/* Title and Intro */}
-          <h1 className="text-3xl font-bold text-[var(--foreground)] mb-4">Where to buy</h1>
+          <h1 className="text-3xl text-[var(--foreground)] mb-4">Where to buy</h1>
           <p className="text-[var(--muted)] mb-2">
             Discover our products at your nearest stores. Select your region and city to get started.
           </p>

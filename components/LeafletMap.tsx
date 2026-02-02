@@ -196,8 +196,8 @@ export default function LeafletMap({
       {/* Map Container */}
       <div ref={mapContainerRef} className="w-full h-full min-h-[400px] rounded-lg" />
 
-      {/* Custom marker styles */}
-      <style jsx global>{`
+      {/* Custom marker styles - scoped to this component */}
+      <style>{`
         .custom-marker {
           background: transparent;
           border: none;

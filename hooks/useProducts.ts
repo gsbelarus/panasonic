@@ -12,6 +12,10 @@ export interface ProductFilters {
   subcategoryCode?: string;
   voltage?: string[];
   q?: string;
+  airVolumeValue?: number;
+  airVolumeUnit?: string;
+  staticPressureValue?: number;
+  staticPressureUnit?: string;
 }
 
 export interface ProductsPagination {
@@ -102,6 +106,14 @@ export function useProducts(): UseProductsResult {
       }
       if (filters.q) {
         params.set('q', filters.q);
+      }
+      if (filters.airVolumeValue && filters.airVolumeValue > 0) {
+        params.set('airVolumeValue', String(filters.airVolumeValue));
+        params.set('airVolumeUnit', filters.airVolumeUnit || 'CMH');
+      }
+      if (filters.staticPressureValue && filters.staticPressureValue > 0) {
+        params.set('staticPressureValue', String(filters.staticPressureValue));
+        params.set('staticPressureUnit', filters.staticPressureUnit || 'Pa');
       }
 
       params.set('limit', String(DEFAULT_LIMIT));

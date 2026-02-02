@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 // ============================================================================
 // Types
@@ -46,6 +46,61 @@ export function GenerateReportModal({
     REPORT_OPTIONS.filter((opt) => opt.defaultChecked).map((opt) => opt.key)
   );
   const [isGenerating, setIsGenerating] = useState(false);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const previousActiveElement = useRef<HTMLElement | null>(null);
+
+  // Focus trap and keyboard handling
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+        return;
+      }
+
+      if (e.key !== 'Tab' || !modalRef.current) return;
+
+      const focusableElements = modalRef.current.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+
+      if (e.shiftKey) {
+        if (document.activeElement === firstElement) {
+          e.preventDefault();
+          lastElement?.focus();
+        }
+      } else {
+        if (document.activeElement === lastElement) {
+          e.preventDefault();
+          firstElement?.focus();
+        }
+      }
+    },
+    [onClose]
+  );
+
+  useEffect(() => {
+    if (isOpen) {
+      previousActiveElement.current = document.activeElement as HTMLElement;
+      document.addEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'hidden';
+
+      // Focus the first focusable element
+      setTimeout(() => {
+        const focusable = modalRef.current?.querySelector<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        focusable?.focus();
+      }, 10);
+
+      return () => {
+        document.removeEventListener('keydown', handleKeyDown);
+        document.body.style.overflow = '';
+        previousActiveElement.current?.focus();
+      };
+    }
+  }, [isOpen, handleKeyDown]);
 
   const handleOptionChange = (key: string, checked: boolean) => {
     if (checked) {
@@ -68,15 +123,26 @@ export function GenerateReportModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="generate-report-title"
+    >
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/50"
         onClick={onClose}
+        role="presentation"
+        aria-hidden="true"
       />
 
       {/* Modal Content */}
-      <div className="relative bg-white rounded-lg shadow-xl w-full max-w-md mx-4 overflow-hidden">
+      <div
+        ref={modalRef}
+        className="relative bg-white rounded-lg shadow-xl w-full max-w-md mx-4 overflow-hidden"
+        role="document"
+      >
         {/* Close Button */}
         <button
           type="button"
@@ -99,7 +165,10 @@ export function GenerateReportModal({
 
         {/* Header */}
         <div className="p-6 pb-4">
-          <h3 className="text-lg font-semibold text-[var(--foreground)] mb-1">
+          <h3
+            id="generate-report-title"
+            className="text-lg font-semibold text-[var(--foreground)] mb-1"
+          >
             Generate a report - <span className="text-[var(--primary)]">{productModelCode}</span>
           </h3>
           <p className="text-sm text-[var(--muted)]">

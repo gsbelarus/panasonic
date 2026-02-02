@@ -92,10 +92,17 @@ export default function Modal({
       aria-labelledby={titleId}
       aria-describedby={description ? descriptionId : undefined}
     >
-      {/* Backdrop */}
+      {/* Backdrop - role="presentation" for accessibility */}
       <div
         className="absolute inset-0 bg-black/50 transition-opacity"
         onClick={onClose}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onClose();
+          }
+        }}
+        role="presentation"
         aria-hidden="true"
       />
 
@@ -103,6 +110,7 @@ export default function Modal({
       <div
         ref={modalRef}
         className="relative bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
+        role="document"
       >
         <div className="p-6">
           <div className="flex items-start justify-between mb-4">

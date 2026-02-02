@@ -8,6 +8,7 @@ import ProductSelectionStepper from '@/components/ProductSelectionStepper';
 import CategoryTiles from '@/components/CategoryTiles';
 import FAQAccordion, { ContactModal } from '@/components/FAQAccordion';
 import Footer from '@/components/Footer';
+import Image from 'next/image'
 
 export default function Home() {
   const [contactModalOpen, setContactModalOpen] = useState(false);
@@ -51,6 +52,15 @@ export default function Home() {
         <ProductSelectionStepper />
 
         <CategoryTiles onCategorySelect={handleCategorySelect} />
+
+        <div className='w-full pb-16 pt-8 flex justify-center bg-[var(--secondary)]'>
+          <Image
+            src="/Screenshot 2026-02-01 234111.png"
+            alt="KDK Banner"
+            width={1315}
+            height={715}
+          />
+        </div>
 
         <FAQAccordion onContactClick={handleContactClick} />
       </main>

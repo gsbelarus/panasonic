@@ -1,10 +1,10 @@
 'use client';
 
 import { useReducer, useEffect, useCallback, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import ConfirmModal from './ConfirmModal';
 import AirVolumeCalculatorModal from './AirVolumeCalculatorModal';
 import StaticPressureCalculatorModal from './StaticPressureCalculatorModal';
-import ResultsBanner from './ResultsBanner';
 import { useRegions, useCountriesByRegion } from '@/hooks/useRegionsAndCountries';
 import { useCategories, useSubcategoriesByCategory } from '@/hooks/useCategoriesAndSubcategories';
 import type { CountryResponse } from '@/lib/db/schemas';
@@ -109,7 +109,6 @@ interface State {
   errors: FormErrors;
   modals: ModalState;
   isDirty: boolean;
-  searchResult: { modelsFound: number } | null;
 }
 
 type Action =
@@ -119,7 +118,6 @@ type Action =
   | { type: 'CLEAR_ERRORS' }
   | { type: 'TOGGLE_MODAL'; modal: keyof ModalState; value: boolean }
   | { type: 'RESET_FORM' }
-  | { type: 'SET_SEARCH_RESULT'; result: { modelsFound: number } | null }
   | { type: 'SET_DIRTY'; value: boolean }
   | { type: 'APPLY_AIR_VOLUME'; value: number; unit: string }
   | { type: 'APPLY_STATIC_PRESSURE'; value: number; unit: string }
@@ -148,7 +146,6 @@ const initialState: State = {
     staticPressureCalc: false,
   },
   isDirty: false,
-  searchResult: null,
 };
 
 function reducer(state: State, action: Action): State {
@@ -180,7 +177,6 @@ function reducer(state: State, action: Action): State {
         form: newForm,
         isDirty: true,
         errors: nextErrors,
-        searchResult: null,
       };
     }
     case 'SET_ERROR':
@@ -199,8 +195,6 @@ function reducer(state: State, action: Action): State {
       };
     case 'RESET_FORM':
       return { ...initialState };
-    case 'SET_SEARCH_RESULT':
-      return { ...state, searchResult: action.result };
     case 'SET_DIRTY':
       return { ...state, isDirty: action.value };
     case 'APPLY_AIR_VOLUME':
@@ -213,7 +207,6 @@ function reducer(state: State, action: Action): State {
         },
         errors: { ...state.errors, airVolume: undefined },
         isDirty: true,
-        searchResult: null,
       };
     case 'APPLY_STATIC_PRESSURE':
       return {
@@ -225,7 +218,6 @@ function reducer(state: State, action: Action): State {
         },
         errors: { ...state.errors, staticPressure: undefined },
         isDirty: true,
-        searchResult: null,
       };
     case 'SET_CATEGORY':
       return {
@@ -237,7 +229,6 @@ function reducer(state: State, action: Action): State {
         },
         isDirty: true,
         errors: { ...state.errors, category: undefined },
-        searchResult: null,
       };
     case 'SET_COUNTRY_WITH_DEFAULTS':
       return {
@@ -250,7 +241,6 @@ function reducer(state: State, action: Action): State {
         },
         isDirty: true,
         errors: { ...state.errors, country: undefined },
-        searchResult: null,
       };
     case 'SET_REGION':
       return {
@@ -264,7 +254,6 @@ function reducer(state: State, action: Action): State {
         },
         isDirty: true,
         errors: { ...state.errors, region: undefined },
-        searchResult: null,
       };
     default:
       return state;
@@ -281,6 +270,7 @@ export default function ProductSelectionStepper({
   onCategoryPreselected,
 }: ProductSelectionStepperProps) {
   const [state, dispatch] = useReducer(reducer, initialState);
+  const router = useRouter();
 
   // Fetch regions and countries from API
   const { regions, loading: regionsLoading, error: regionsError } = useRegions();
@@ -439,11 +429,41 @@ export default function ProductSelectionStepper({
   };
 
   const handleSearch = () => {
-    if (validateAll()) {
-      // Mock search result
-      const modelsFound = Math.floor(Math.random() * 50) + 5;
-      dispatch({ type: 'SET_SEARCH_RESULT', result: { modelsFound } });
+    if (!validateAll()) return;
+
+    const region = regions.find((r) => r.name === state.form.region);
+    const country = countriesData.find((c) => c.name === state.form.country);
+    const category = categoriesData.find((c) => c.name === state.form.category);
+    const subcategory = subcategoriesData.find((s) => s.name === state.form.subcategory);
+
+    const params = new URLSearchParams();
+    if (region?.code) params.set('regionCode', region.code);
+    if (country?.iso2) params.set('countryKey', country.iso2);
+    if (category?.code) params.set('categoryCode', category.code);
+    if (subcategory?.code) params.set('subcategoryCode', subcategory.code);
+
+    const voltage = state.form.voltage.trim();
+    if (voltage) {
+      const normalizedVoltage = voltage.replace(/[^0-9]/g, '');
+      if (normalizedVoltage) {
+        params.set('voltage', normalizedVoltage);
+      }
     }
+
+    const airVolumeValue = Number(state.form.airVolume);
+    if (!Number.isNaN(airVolumeValue) && airVolumeValue > 0) {
+      params.set('airVolumeValue', String(airVolumeValue));
+      params.set('airVolumeUnit', state.form.airVolumeUnit || 'CMH');
+    }
+
+    const staticPressureValue = Number(state.form.staticPressure);
+    if (!Number.isNaN(staticPressureValue) && staticPressureValue > 0) {
+      params.set('staticPressureValue', String(staticPressureValue));
+      params.set('staticPressureUnit', state.form.staticPressureUnit || 'Pa');
+    }
+
+    const queryString = params.toString();
+    router.push(queryString ? `/product-lists?${queryString}` : '/product-lists');
   };
 
   const handleClearForm = () => {
@@ -481,7 +501,7 @@ export default function ProductSelectionStepper({
   return (
     <section id="product-selection" className="py-12 sm:py-16 bg-white">
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
-        <h2 className="text-xl sm:text-2xl font-bold text-[var(--foreground)] mb-8">
+        <h2 className="text-xl sm:text-2xl text-[var(--foreground)] mb-8">
           Product Selection
         </h2>
 
@@ -489,12 +509,12 @@ export default function ProductSelectionStepper({
           {/* Step 1 */}
           <div className="flex gap-4 sm:gap-6 pb-8 border-b border-[var(--border)]">
             <div className="flex-shrink-0">
-              <div className="w-8 h-8 rounded-full bg-[var(--primary)] text-white flex items-center justify-center text-sm font-semibold">
+              <div className="w-8 h-8 rounded-full bg-[var(--primary)] text-white flex items-center justify-center text-sm ">
                 1
               </div>
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-base sm:text-lg font-semibold text-[var(--foreground)] mb-4">
+              <h3 className="text-base sm:text-lg text-[var(--foreground)] mb-4">
                 Select Region and Country
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -575,12 +595,12 @@ export default function ProductSelectionStepper({
             className="flex gap-4 sm:gap-6 py-8 border-b border-[var(--border)]"
           >
             <div className="flex-shrink-0">
-              <div className="w-8 h-8 rounded-full bg-[var(--primary)] text-white flex items-center justify-center text-sm font-semibold">
+              <div className="w-8 h-8 rounded-full bg-[var(--primary)] text-white flex items-center justify-center text-sm ">
                 2
               </div>
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-base sm:text-lg font-semibold text-[var(--foreground)] mb-4">
+              <h3 className="text-base sm:text-lg text-[var(--foreground)] mb-4">
                 Select Category
               </h3>
 
@@ -689,12 +709,12 @@ export default function ProductSelectionStepper({
           {/* Step 3 */}
           <div className="flex gap-4 sm:gap-6 py-8 border-b border-[var(--border)]">
             <div className="flex-shrink-0">
-              <div className="w-8 h-8 rounded-full bg-[var(--primary)] text-white flex items-center justify-center text-sm font-semibold">
+              <div className="w-8 h-8 rounded-full bg-[var(--primary)] text-white flex items-center justify-center text-sm ">
                 3
               </div>
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-base sm:text-lg font-semibold text-[var(--foreground)] mb-2">
+              <h3 className="text-base sm:text-lg text-[var(--foreground)] mb-2">
                 Select Voltage and Frequency
               </h3>
               <p className="text-xs text-[var(--muted)] mb-4">
@@ -768,12 +788,12 @@ export default function ProductSelectionStepper({
           {/* Step 4 */}
           <div className="flex gap-4 sm:gap-6 pt-8">
             <div className="flex-shrink-0">
-              <div className="w-8 h-8 rounded-full bg-[var(--primary)] text-white flex items-center justify-center text-sm font-semibold">
+              <div className="w-8 h-8 rounded-full bg-[var(--primary)] text-white flex items-center justify-center text-sm ">
                 4
               </div>
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-base sm:text-lg font-semibold text-[var(--foreground)] mb-4">
+              <h3 className="text-base sm:text-lg  text-[var(--foreground)] mb-4">
                 Enter Air Volume and Static Pressure
               </h3>
               <div className="space-y-6">
@@ -929,15 +949,6 @@ export default function ProductSelectionStepper({
             </button>
           </div>
 
-          {/* Results Banner */}
-          {state.searchResult && (
-            <ResultsBanner
-              modelsFound={state.searchResult.modelsFound}
-              onClose={() =>
-                dispatch({ type: 'SET_SEARCH_RESULT', result: null })
-              }
-            />
-          )}
         </div>
       </div>
 

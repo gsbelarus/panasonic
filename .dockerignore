@@ -1,0 +1,49 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Build outputs
+.next
+out
+dist
+build
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Environment files (these should be injected at runtime)
+.env
+.env.*
+!.env.example
+
+# Documentation
+doc/
+*.md
+!README.md
+
+# Misc
+.DS_Store
+Thumbs.db
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Test files
+__tests__
+*.test.*
+*.spec.*
+coverage/
+
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore

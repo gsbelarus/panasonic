@@ -47,21 +47,53 @@ function ProductListsPageContent() {
 
   const searchParams = useSearchParams();
   const router = useRouter();
-  const urlCategoryCodes = useMemo(() => {
-    const categoryParam = searchParams.get('categoryCode');
-    if (!categoryParam) return [] as string[];
-
-    return categoryParam
+  const parseListParam = useCallback((value: string | null) => {
+    if (!value) return [] as string[];
+    return value
       .split(',')
-      .map((value) => value.trim())
+      .map((item) => item.trim())
       .filter(Boolean);
-  }, [searchParams]);
-  const hasCategoryParam = searchParams.has('categoryCode');
+  }, []);
+  const parseNumberParam = useCallback((value: string | null) => {
+    if (!value) return 0;
+    const numberValue = Number(value);
+    return Number.isFinite(numberValue) ? numberValue : 0;
+  }, []);
+  const urlFilters = useMemo(() => {
+    return {
+      regionCode: searchParams.get('regionCode') || '',
+      countryKey: searchParams.get('countryKey') || '',
+      selectedCategories: parseListParam(searchParams.get('categoryCode')),
+      selectedSubcategories: parseListParam(searchParams.get('subcategoryCode')),
+      selectedVoltages: parseListParam(searchParams.get('voltage')),
+      airVolumeUnit: searchParams.get('airVolumeUnit') || 'CMH',
+      airVolumeValue: parseNumberParam(searchParams.get('airVolumeValue')),
+      staticPressureUnit: searchParams.get('staticPressureUnit') || 'Pa',
+      staticPressureValue: parseNumberParam(searchParams.get('staticPressureValue')),
+      searchQuery: searchParams.get('q') || '',
+    };
+  }, [parseListParam, parseNumberParam, searchParams]);
+  const hasRelevantParams = useMemo(
+    () =>
+      [
+        'regionCode',
+        'countryKey',
+        'categoryCode',
+        'subcategoryCode',
+        'voltage',
+        'airVolumeValue',
+        'staticPressureValue',
+        'airVolumeUnit',
+        'staticPressureUnit',
+        'q',
+      ].some((key) => searchParams.has(key)),
+    [searchParams]
+  );
 
   // Filter state
   const [filters, setFilters] = useState<FilterState>(() => ({
     ...initialFilterState,
-    selectedCategories: urlCategoryCodes,
+    ...urlFilters,
   }));
 
   // Mobile filters panel state
@@ -75,7 +107,7 @@ function ProductListsPageContent() {
   const [showReportSuccess, setShowReportSuccess] = useState(false);
 
   // Search input state (debounced)
-  const [searchInput, setSearchInput] = useState('');
+  const [searchInput, setSearchInput] = useState(urlFilters.searchQuery || '');
   const pendingQueryRef = useRef<string | null>(null);
 
   // Data hooks
@@ -100,10 +132,56 @@ function ProductListsPageContent() {
           typeof nextFilters === 'function' ? nextFilters(prev) : nextFilters;
 
         const params = new URLSearchParams(searchParams.toString());
+        if (resolved.regionCode) {
+          params.set('regionCode', resolved.regionCode);
+        } else {
+          params.delete('regionCode');
+        }
+
+        if (resolved.countryKey) {
+          params.set('countryKey', resolved.countryKey);
+        } else {
+          params.delete('countryKey');
+        }
+
         if (resolved.selectedCategories.length > 0) {
           params.set('categoryCode', resolved.selectedCategories.join(','));
         } else {
           params.delete('categoryCode');
+        }
+
+        if (resolved.selectedSubcategories.length > 0) {
+          params.set('subcategoryCode', resolved.selectedSubcategories.join(','));
+        } else {
+          params.delete('subcategoryCode');
+        }
+
+        if (resolved.selectedVoltages.length > 0) {
+          params.set('voltage', resolved.selectedVoltages.join(','));
+        } else {
+          params.delete('voltage');
+        }
+
+        if (resolved.airVolumeValue > 0) {
+          params.set('airVolumeValue', String(resolved.airVolumeValue));
+          params.set('airVolumeUnit', resolved.airVolumeUnit || 'CMH');
+        } else {
+          params.delete('airVolumeValue');
+          params.delete('airVolumeUnit');
+        }
+
+        if (resolved.staticPressureValue > 0) {
+          params.set('staticPressureValue', String(resolved.staticPressureValue));
+          params.set('staticPressureUnit', resolved.staticPressureUnit || 'Pa');
+        } else {
+          params.delete('staticPressureValue');
+          params.delete('staticPressureUnit');
+        }
+
+        if (resolved.searchQuery) {
+          params.set('q', resolved.searchQuery);
+        } else {
+          params.delete('q');
         }
 
         const queryString = params.toString();
@@ -115,46 +193,38 @@ function ProductListsPageContent() {
     [searchParams]
   );
 
-  // Sync local selected categories when URL changes (back/forward navigation)
+  // Sync local filters when URL changes (back/forward navigation)
   useEffect(() => {
     if (pendingQueryRef.current) return;
-    if (!hasCategoryParam && filters.selectedCategories.length === 0) return;
 
-    const isSameSelection =
-      filters.selectedCategories.length === urlCategoryCodes.length &&
-      filters.selectedCategories.every((code) => urlCategoryCodes.includes(code));
+    const isSameSelection = (a: string[], b: string[]) =>
+      a.length === b.length && a.every((value) => b.includes(value));
 
-    if (isSameSelection) return;
+    const isSameFilters =
+      filters.regionCode === urlFilters.regionCode &&
+      filters.countryKey === urlFilters.countryKey &&
+      isSameSelection(filters.selectedCategories, urlFilters.selectedCategories) &&
+      isSameSelection(filters.selectedSubcategories, urlFilters.selectedSubcategories) &&
+      isSameSelection(filters.selectedVoltages, urlFilters.selectedVoltages) &&
+      filters.airVolumeUnit === urlFilters.airVolumeUnit &&
+      filters.airVolumeValue === urlFilters.airVolumeValue &&
+      filters.staticPressureUnit === urlFilters.staticPressureUnit &&
+      filters.staticPressureValue === urlFilters.staticPressureValue &&
+      filters.searchQuery === urlFilters.searchQuery;
+
+    if (isSameFilters) return;
 
     const timer = window.setTimeout(() => {
       if (pendingQueryRef.current) return;
-      setFilters((prev) => ({
-        ...prev,
-        selectedCategories: urlCategoryCodes,
-      }));
+      setFilters({
+        ...initialFilterState,
+        ...urlFilters,
+      });
+      setSearchInput(urlFilters.searchQuery || '');
     }, 0);
 
     return () => window.clearTimeout(timer);
-  }, [hasCategoryParam, urlCategoryCodes, filters.selectedCategories]);
-
-  // Sync local selected categories when URL changes (back/forward navigation)
-  useEffect(() => {
-    if (!hasCategoryParam && filters.selectedCategories.length === 0) return;
-
-    const isSameSelection =
-      filters.selectedCategories.length === urlCategoryCodes.length &&
-      filters.selectedCategories.every((code) => urlCategoryCodes.includes(code));
-
-    if (isSameSelection) return;
-    const timer = window.setTimeout(() => {
-      setFilters((prev) => ({
-        ...prev,
-        selectedCategories: urlCategoryCodes,
-      }));
-    }, 0);
-
-    return () => window.clearTimeout(timer);
-  }, [hasCategoryParam, urlCategoryCodes, filters.selectedCategories]);
+  }, [filters, hasRelevantParams, urlFilters]);
 
   useEffect(() => {
     if (!pendingQueryRef.current) return;
@@ -179,6 +249,10 @@ function ProductListsPageContent() {
             : undefined,
         voltage: filters.selectedVoltages.length > 0 ? filters.selectedVoltages : undefined,
         q: filters.searchQuery || undefined,
+        airVolumeValue: filters.airVolumeValue > 0 ? filters.airVolumeValue : undefined,
+        airVolumeUnit: filters.airVolumeValue > 0 ? filters.airVolumeUnit : undefined,
+        staticPressureValue: filters.staticPressureValue > 0 ? filters.staticPressureValue : undefined,
+        staticPressureUnit: filters.staticPressureValue > 0 ? filters.staticPressureUnit : undefined,
       };
       fetchProducts(productFilters);
     } else {
@@ -191,6 +265,10 @@ function ProductListsPageContent() {
     filters.selectedSubcategories,
     filters.selectedVoltages,
     filters.searchQuery,
+    filters.airVolumeValue,
+    filters.airVolumeUnit,
+    filters.staticPressureValue,
+    filters.staticPressureUnit,
     fetchProducts,
     resetProducts,
   ]);
@@ -199,12 +277,12 @@ function ProductListsPageContent() {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (searchInput !== filters.searchQuery) {
-        setFilters((prev) => ({ ...prev, searchQuery: searchInput }));
+        handleFiltersChange((prev) => ({ ...prev, searchQuery: searchInput }));
       }
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [searchInput, filters.searchQuery]);
+  }, [searchInput, filters.searchQuery, handleFiltersChange]);
 
   // Category name lookup
   const categoryNameMap = useMemo(() => {
@@ -220,23 +298,27 @@ function ProductListsPageContent() {
   const showNoResultsState =
     !showLocationEmptyState && !productsLoading && !productsError && products.length === 0;
 
-  // Handle comparison toggle
-  const handleCompareChange = (productId: string, selected: boolean) => {
+  // Handle comparison toggle - use product slug for comparison
+  const handleCompareChange = (productSlug: string, selected: boolean) => {
     const newComparisonProducts = new Set(comparisonProducts);
     if (selected) {
       if (newComparisonProducts.size < 3) {
-        newComparisonProducts.add(productId);
+        newComparisonProducts.add(productSlug);
       }
     } else {
-      newComparisonProducts.delete(productId);
+      newComparisonProducts.delete(productSlug);
     }
     setComparisonProducts(newComparisonProducts);
   };
 
-  const comparisonIds = useMemo(() => Array.from(comparisonProducts), [comparisonProducts]);
-  const comparisonHref = comparisonIds.length > 0
-    ? `/comparison?ids=${encodeURIComponent(comparisonIds.join(','))}`
-    : '/comparison';
+  const comparisonSlugs = useMemo(() => Array.from(comparisonProducts), [comparisonProducts]);
+  const comparisonHref = useMemo(() => {
+    if (comparisonSlugs.length === 0) return '/comparison';
+    const params = new URLSearchParams();
+    params.set('products', comparisonSlugs.join(','));
+    if (filters.countryKey) params.set('country', filters.countryKey);
+    return `/comparison?${params.toString()}`;
+  }, [comparisonSlugs, filters.countryKey]);
 
   // Handle report generation (stubbed)
   const handleGenerateReport = (type: 'jpeg' | 'pdf', options: string[]) => {
@@ -495,9 +577,9 @@ function ProductListsPageContent() {
                         key={product._id}
                         product={product}
                         viewMode={viewMode}
-                        isCompareSelected={comparisonProducts.has(product._id)}
+                        isCompareSelected={comparisonProducts.has(product.slug)}
                         onCompareChange={(selected) =>
-                          handleCompareChange(product._id, selected)
+                          handleCompareChange(product.slug, selected)
                         }
                         onGenerateReport={() => setReportModalProduct(product)}
                         categoryName={categoryNameMap.get(product.categoryCode)}

@@ -10,13 +10,18 @@ import {
 } from '@/lib/db';
 import type { ProductResponse } from '@/lib/db/products/schema';
 
-// Initialize database on first request (server-side only)
-let initialized = false;
+// Initialize database on first request using Promise singleton for thread-safety
+let initializationPromise: Promise<boolean> | null = null;
 
-async function ensureInitialized() {
-  if (!initialized) {
-    const success = await initializeDatabase();
-    initialized = success;
+async function ensureInitialized(): Promise<void> {
+  if (!initializationPromise) {
+    initializationPromise = initializeDatabase();
+  }
+  const success = await initializationPromise;
+  if (!success) {
+    // Clear the cached promise so next request can retry
+    initializationPromise = null;
+    throw new Error('Database initialization failed');
   }
 }
 
@@ -32,6 +37,10 @@ const ProductsQuerySchema = z.object({
   modelCodes: z.string().optional(),
   voltage: z.string().optional(), // Comma-separated values for multiple voltages
   q: z.string().optional(), // Search query
+  airVolumeValue: z.coerce.number().nonnegative().optional(),
+  airVolumeUnit: z.string().optional(), // CMH, CFM, m³/min, etc.
+  staticPressureValue: z.coerce.number().nonnegative().optional(),
+  staticPressureUnit: z.string().optional(), // Pa, mmH2O, inH2O, etc.
   limit: z.coerce.number().int().min(1).max(100).default(12),
   skip: z.coerce.number().int().min(0).default(0),
 });
@@ -91,6 +100,10 @@ export async function GET(
       modelCodes: searchParams.get('modelCodes') || undefined,
       voltage: searchParams.get('voltage') || undefined,
       q: searchParams.get('q') || undefined,
+      airVolumeValue: searchParams.get('airVolumeValue') || undefined,
+      airVolumeUnit: searchParams.get('airVolumeUnit') || undefined,
+      staticPressureValue: searchParams.get('staticPressureValue') || undefined,
+      staticPressureUnit: searchParams.get('staticPressureUnit') || undefined,
       limit: searchParams.get('limit') || undefined,
       skip: searchParams.get('skip') || undefined,
     };
@@ -114,6 +127,10 @@ export async function GET(
       modelCodes,
       voltage,
       q,
+      airVolumeValue,
+      airVolumeUnit,
+      staticPressureValue,
+      staticPressureUnit,
       limit,
       skip,
     } =
@@ -244,6 +261,24 @@ export async function GET(
       addAndCondition(query, { $or: searchCondition });
     }
 
+    // Filter by air volume - products whose max air volume >= requested value
+    if (airVolumeValue !== undefined && airVolumeValue > 0) {
+      // Convert value to the database unit (m³/min) if needed
+      const normalizedAirVolume = convertAirVolumeToDbUnit(airVolumeValue, airVolumeUnit || 'CMH');
+      addAndCondition(query, {
+        'fanSpec.airVolume.max': { $gte: normalizedAirVolume },
+      });
+    }
+
+    // Filter by static pressure - products whose max static pressure >= requested value
+    if (staticPressureValue !== undefined && staticPressureValue > 0) {
+      // Convert value to the database unit (Pa) if needed
+      const normalizedStaticPressure = convertStaticPressureToDbUnit(staticPressureValue, staticPressureUnit || 'Pa');
+      addAndCondition(query, {
+        'fanSpec.staticPressure.max': { $gte: normalizedStaticPressure },
+      });
+    }
+
     // Exclude products with invalid category/subcategory codes
     if (!categoryCode && !query.categoryCode) {
       query.categoryCode = { $in: Array.from(validCategoryCodes) };
@@ -333,4 +368,68 @@ function addAndCondition(query: MongoQuery, condition: MongoQuery): void {
   }
 
   Object.assign(query, condition);
+}
+
+// ============================================================================
+// Unit Conversion Helpers
+// ============================================================================
+
+/**
+ * Convert air volume to database unit (m³/min)
+ * Supported input units: CMH (m³/h), CFM (ft³/min), L/s, m³/min
+ */
+function convertAirVolumeToDbUnit(value: number, unit: string): number {
+  const normalizedUnit = unit.toUpperCase().replace(/[³\/]/g, '');
+
+  switch (normalizedUnit) {
+    case 'CMH':
+    case 'M3H':
+    case 'M3HR':
+      // m³/h to m³/min: divide by 60
+      return value / 60;
+    case 'CFM':
+    case 'FT3MIN':
+      // ft³/min to m³/min: multiply by 0.0283168
+      return value * 0.0283168;
+    case 'LS':
+    case 'LSEC':
+    case 'LMIN':
+      // L/s to m³/min: 1 L/s = 0.001 m³/s = 0.06 m³/min
+      // Note: L/min would be 0.001 m³/min, but UI uses L/s
+      return normalizedUnit === 'LMIN' ? value * 0.001 : value * 0.06;
+    case 'M3MIN':
+    case 'CMM':
+    default:
+      // Already in m³/min or assume m³/min as default
+      return value;
+  }
+}
+
+/**
+ * Convert static pressure to database unit (Pa)
+ * Supported input units: Pa, mmH2O (mmAq, mmWG, mmWC), inH2O (inWG, inWC), mmHg
+ */
+function convertStaticPressureToDbUnit(value: number, unit: string): number {
+  const normalizedUnit = unit.toUpperCase().replace(/[²]/g, '');
+
+  switch (normalizedUnit) {
+    case 'MMH2O':
+    case 'MMAQ':
+    case 'MMWC':
+    case 'MMWG':
+      // mmH2O to Pa: multiply by 9.80665
+      return value * 9.80665;
+    case 'INH2O':
+    case 'INWG':
+    case 'INWC':
+      // inH2O to Pa: multiply by 249.089
+      return value * 249.089;
+    case 'MMHG':
+      // mmHg to Pa: multiply by 133.322
+      return value * 133.322;
+    case 'PA':
+    default:
+      // Already in Pa or assume Pa as default
+      return value;
+  }
 }

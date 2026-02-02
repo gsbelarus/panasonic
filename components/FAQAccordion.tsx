@@ -53,7 +53,7 @@ export default function FAQAccordion({ onContactClick }: FAQAccordionProps) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
           {/* Left column - Contact */}
           <div className="lg:col-span-1">
-            <h2 className="text-xl sm:text-2xl font-bold text-[var(--foreground)] mb-4">
+            <h2 className="text-xl sm:text-2xl text-[var(--foreground)] mb-4">
               Frequently Asked Questions
             </h2>
             <p className="text-sm text-[var(--muted)] mb-4">
@@ -62,9 +62,9 @@ export default function FAQAccordion({ onContactClick }: FAQAccordionProps) {
             <button
               type="button"
               onClick={onContactClick}
-              className="px-6 py-2.5 text-sm font-medium text-white bg-[var(--primary)] rounded-[10px] hover:bg-[var(--primary-hover)] transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:ring-offset-2"
+              className="px-8 py-4 text-lg font-medium text-white bg-[var(--primary)] rounded-[10px] hover:bg-[var(--primary-hover)] transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:ring-offset-2"
             >
-              Contact us
+              ✉ Contact us
             </button>
           </div>
 
@@ -74,7 +74,7 @@ export default function FAQAccordion({ onContactClick }: FAQAccordionProps) {
               {faqItems.map((item, index) => (
                 <div
                   key={index}
-                  className="border border-[var(--border)] rounded-xl overflow-hidden"
+                  className="border-b border-[var(--border)] overflow-hidden"
                 >
                   <button
                     type="button"
@@ -82,7 +82,7 @@ export default function FAQAccordion({ onContactClick }: FAQAccordionProps) {
                     className="w-full flex items-center justify-between px-5 py-4 text-left bg-white hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[var(--primary)]"
                     aria-expanded={openIndex === index}
                   >
-                    <span className="text-sm font-medium text-[var(--foreground)] pr-4">
+                    <span className="text-lg font-medium text-[var(--foreground)] pr-4">
                       {item.question}
                     </span>
                     <svg
