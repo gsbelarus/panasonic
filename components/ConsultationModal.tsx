@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
+import { useState, useEffect, useRef, useCallback, FormEvent } from 'react';
 
 // ============================================================================
 // Types
@@ -46,26 +46,97 @@ export function ConsultationModal({
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const previousActiveElement = useRef<HTMLElement | null>(null);
+
+  // RFC 5322 compliant email regex (simplified but robust)
+  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+
+  // Phone validation: allows + and digits, minimum 7 characters
+  const phoneRegex = /^\+?[\d\s\-()]{7,20}$/;
+
+  // Focus trap and keyboard handling
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+        return;
+      }
+
+      if (e.key !== 'Tab' || !modalRef.current) return;
+
+      const focusableElements = modalRef.current.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+
+      if (e.shiftKey) {
+        if (document.activeElement === firstElement) {
+          e.preventDefault();
+          lastElement?.focus();
+        }
+      } else {
+        if (document.activeElement === lastElement) {
+          e.preventDefault();
+          firstElement?.focus();
+        }
+      }
+    },
+    [onClose]
+  );
+
+  useEffect(() => {
+    if (isOpen) {
+      previousActiveElement.current = document.activeElement as HTMLElement;
+      document.addEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'hidden';
+
+      // Focus the first focusable element
+      setTimeout(() => {
+        const focusable = modalRef.current?.querySelector<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        focusable?.focus();
+      }, 10);
+
+      return () => {
+        document.removeEventListener('keydown', handleKeyDown);
+        document.body.style.overflow = '';
+        previousActiveElement.current?.focus();
+      };
+    }
+  }, [isOpen, handleKeyDown]);
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
 
-    if (!formData.name.trim()) {
+    const trimmedName = formData.name.trim();
+    if (!trimmedName) {
       newErrors.name = 'Name is required';
+    } else if (trimmedName.length < 2 || trimmedName.length > 100) {
+      newErrors.name = 'Name must be between 2 and 100 characters';
     }
 
-    if (!formData.email.trim()) {
+    const trimmedEmail = formData.email.trim().toLowerCase();
+    if (!trimmedEmail) {
       newErrors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    } else if (!emailRegex.test(trimmedEmail) || trimmedEmail.length > 254) {
       newErrors.email = 'Please enter a valid email address';
     }
 
-    if (!formData.phone.trim()) {
+    const trimmedPhone = formData.phone.trim();
+    if (!trimmedPhone) {
       newErrors.phone = 'Phone number is required';
+    } else if (!phoneRegex.test(trimmedPhone)) {
+      newErrors.phone = 'Please enter a valid phone number';
     }
 
-    if (!formData.message.trim()) {
+    const trimmedMessage = formData.message.trim();
+    if (!trimmedMessage) {
       newErrors.message = 'Message is required';
+    } else if (trimmedMessage.length < 10 || trimmedMessage.length > 2000) {
+      newErrors.message = 'Message must be between 10 and 2000 characters';
     }
 
     setErrors(newErrors);
@@ -117,15 +188,26 @@ export function ConsultationModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="consultation-modal-title"
+    >
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/50"
         onClick={handleClose}
+        role="presentation"
+        aria-hidden="true"
       />
 
       {/* Modal Content */}
-      <div className="relative bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 overflow-hidden max-h-[90vh] overflow-y-auto">
+      <div
+        ref={modalRef}
+        className="relative bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 overflow-hidden max-h-[90vh] overflow-y-auto"
+        role="document"
+      >
         {/* Close Button */}
         <button
           type="button"
@@ -184,7 +266,10 @@ export function ConsultationModal({
           <>
             {/* Header */}
             <div className="p-6 pb-4 border-b border-[var(--border)]">
-              <h3 className="text-xl font-semibold text-[var(--foreground)] mb-1">
+              <h3
+                id="consultation-modal-title"
+                className="text-xl font-semibold text-[var(--foreground)] mb-1"
+              >
                 Get Free Consultation
               </h3>
               <p className="text-sm text-[var(--muted)]">

@@ -10,14 +10,14 @@ import {
 } from '@/lib/db';
 import type { ProductResponse } from '@/lib/db/products/schema';
 
-// Initialize database on first request (server-side only)
-let initialized = false;
+// Initialize database on first request using Promise singleton for thread-safety
+let initializationPromise: Promise<boolean> | null = null;
 
-async function ensureInitialized() {
-  if (!initialized) {
-    const success = await initializeDatabase();
-    initialized = success;
+async function ensureInitialized(): Promise<void> {
+  if (!initializationPromise) {
+    initializationPromise = initializeDatabase();
   }
+  await initializationPromise;
 }
 
 // ============================================================================

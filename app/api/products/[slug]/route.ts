@@ -6,14 +6,14 @@ import {
 } from '@/lib/db';
 import { parseProduct, type ProductResponse } from '@/lib/db/products/schema';
 
-// Initialize database on first request (server-side only)
-let initialized = false;
+// Initialize database on first request using Promise singleton for thread-safety
+let initializationPromise: Promise<boolean> | null = null;
 
-async function ensureInitialized() {
-  if (!initialized) {
-    const success = await initializeDatabase();
-    initialized = success;
+async function ensureInitialized(): Promise<void> {
+  if (!initializationPromise) {
+    initializationPromise = initializeDatabase();
   }
+  await initializationPromise;
 }
 
 // ============================================================================
@@ -28,6 +28,10 @@ export interface ProductApiResponse {
 // ============================================================================
 // GET /api/products/[slug]
 // ============================================================================
+
+// Slug validation: only allow lowercase alphanumeric and hyphens
+const slugPattern = /^[a-z0-9-]+$/;
+const MAX_SLUG_LENGTH = 100;
 
 /**
  * GET /api/products/[slug]
@@ -56,17 +60,29 @@ export async function GET(
       );
     }
 
+    // Validate slug format to prevent injection attacks
+    const normalizedSlug = slug.toLowerCase().trim();
+    if (!slugPattern.test(normalizedSlug) || normalizedSlug.length > MAX_SLUG_LENGTH) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Invalid product slug format',
+        } as ErrorResponse,
+        { status: 400 }
+      );
+    }
+
     // Get the products collection
     const productsCollection = await getProductsCollection();
 
     // Find the product by slug
-    const product = await productsCollection.findOne({ slug: slug.toLowerCase() });
+    const product = await productsCollection.findOne({ slug: normalizedSlug });
 
     if (!product) {
       return NextResponse.json(
         {
           success: false,
-          error: `Product with slug "${slug}" not found`,
+          error: 'Product not found',
         } as ErrorResponse,
         { status: 404 }
       );
@@ -82,10 +98,11 @@ export async function GET(
   } catch (error) {
     console.error('[API] Error fetching product:', error);
 
+    // Don't expose internal error details to clients
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : 'An unexpected error occurred',
+        error: 'An unexpected error occurred',
       } as ErrorResponse,
       { status: 500 }
     );
